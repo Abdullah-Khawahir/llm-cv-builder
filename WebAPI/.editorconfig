@@ -1,0 +1,36 @@
+root = true
+
+[*.cs]
+
+
+# ========================================
+# Example: Minimal Configuration
+# ========================================
+# Uncomment to analyze only methods and constructors:
+# throws_analyzer_analyze_methods = true
+# throws_analyzer_analyze_constructors = true
+# throws_analyzer_analyze_destructors = false
+# throws_analyzer_analyze_operators = false
+# throws_analyzer_analyze_conversion_operators = false
+# throws_analyzer_analyze_properties = false
+# throws_analyzer_analyze_accessors = false
+# throws_analyzer_analyze_local_functions = false
+# throws_analyzer_analyze_lambdas = false
+# throws_analyzer_analyze_anonymous_methods = false
+
+
+# ========================================
+# Example: Focus on Unhandled Exceptions Only
+# ========================================
+# Uncomment to focus only on unhandled throws:
+throws_analyzer_enable_throw_statement = false
+throws_analyzer_enable_unhandled_throw = true
+throws_analyzer_enable_try_catch = false
+dotnet_diagnostic.THROWS002.severity = error
+
+# IDE0160: Convert to block scoped namespace
+csharp_style_namespace_declarations = file_scoped
+
+# IDE0130: Namespace does not match folder structure
+dotnet_diagnostic.IDE0130.severity = none
+
