@@ -5,7 +5,30 @@
     "version": "1.0"
   },
   "paths": {
-    "/api/ChatSession/history": {
+    "/api/cv/preview/{id}": {
+      "get": {
+        "tags": [
+          "CV"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/chat-sessions": {
       "get": {
         "tags": [
           "ChatSession"
@@ -18,7 +41,7 @@
                 "schema": {
                   "type": "array",
                   "items": {
-                    "$ref": "#/components/schemas/ChatSession"
+                    "$ref": "#/components/schemas/ChatSessionDto"
                   }
                 }
               },
@@ -26,7 +49,7 @@
                 "schema": {
                   "type": "array",
                   "items": {
-                    "$ref": "#/components/schemas/ChatSession"
+                    "$ref": "#/components/schemas/ChatSessionDto"
                   }
                 }
               },
@@ -34,8 +57,35 @@
                 "schema": {
                   "type": "array",
                   "items": {
-                    "$ref": "#/components/schemas/ChatSession"
+                    "$ref": "#/components/schemas/ChatSessionDto"
                   }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "ChatSession"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChatSessionDto"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChatSessionDto"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChatSessionDto"
                 }
               }
             }
@@ -43,7 +93,7 @@
         }
       }
     },
-    "/api/ChatSession/{id}": {
+    "/api/chat-sessions/{id}": {
       "get": {
         "tags": [
           "ChatSession"
@@ -65,17 +115,17 @@
             "content": {
               "text/plain": {
                 "schema": {
-                  "$ref": "#/components/schemas/ChatSession"
+                  "$ref": "#/components/schemas/ChatSessionDto"
                 }
               },
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ChatSession"
+                  "$ref": "#/components/schemas/ChatSessionDto"
                 }
               },
               "text/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ChatSession"
+                  "$ref": "#/components/schemas/ChatSessionDto"
                 }
               }
             }
@@ -83,7 +133,7 @@
         }
       }
     },
-    "/api/ChatSession/chat/{id}/stream": {
+    "/api/chat-sessions/{id}/stream": {
       "post": {
         "tags": [
           "ChatSession"
@@ -103,147 +153,24 @@
           "content": {
             "application/json": {
               "schema": {
-                "type": "string"
+                "$ref": "#/components/schemas/ChatPromptRequest"
               }
             },
             "text/json": {
               "schema": {
-                "type": "string"
+                "$ref": "#/components/schemas/ChatPromptRequest"
               }
             },
             "application/*+json": {
               "schema": {
-                "type": "string"
+                "$ref": "#/components/schemas/ChatPromptRequest"
               }
             }
           }
         },
         "responses": {
           "200": {
-            "description": "OK",
-            "content": {
-              "text/plain": {
-                "schema": {
-                  "type": "array",
-                  "items": {
-                    "type": "string"
-                  }
-                }
-              },
-              "application/json": {
-                "schema": {
-                  "type": "array",
-                  "items": {
-                    "type": "string"
-                  }
-                }
-              },
-              "text/json": {
-                "schema": {
-                  "type": "array",
-                  "items": {
-                    "type": "string"
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/ChatSession/{id}/chat": {
-      "post": {
-        "tags": [
-          "ChatSession"
-        ],
-        "parameters": [
-          {
-            "name": "id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "format": "uuid"
-            }
-          }
-        ],
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "type": "string"
-              }
-            },
-            "text/json": {
-              "schema": {
-                "type": "string"
-              }
-            },
-            "application/*+json": {
-              "schema": {
-                "type": "string"
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "OK",
-            "content": {
-              "text/plain": {
-                "schema": {
-                  "$ref": "#/components/schemas/ChatSession"
-                }
-              },
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ChatSession"
-                }
-              },
-              "text/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ChatSession"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/ChatSession/new": {
-      "post": {
-        "tags": [
-          "ChatSession"
-        ],
-        "responses": {
-          "200": {
-            "description": "OK",
-            "content": {
-              "text/plain": {
-                "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/ChatSession"
-                  }
-                }
-              },
-              "application/json": {
-                "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/ChatSession"
-                  }
-                }
-              },
-              "text/json": {
-                "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/ChatSession"
-                  }
-                }
-              }
-            }
+            "description": "OK"
           }
         }
       }
@@ -251,52 +178,44 @@
   },
   "components": {
     "schemas": {
-      "AuthorRole": {
+      "ChatHistoryDto": {
         "type": "object",
         "properties": {
-          "label": {
-            "type": "string",
-            "nullable": true
-          }
-        },
-        "additionalProperties": false
-      },
-      "ChatMessageContent": {
-        "type": "object",
-        "properties": {
-          "mimeType": {
-            "type": "string",
-            "nullable": true
-          },
-          "modelId": {
-            "type": "string",
-            "nullable": true
-          },
-          "metadata": {
-            "type": "object",
-            "additionalProperties": {
-              "nullable": true
-            },
-            "nullable": true
-          },
-          "authorName": {
-            "type": "string",
-            "nullable": true
-          },
-          "role": {
-            "$ref": "#/components/schemas/AuthorRole"
-          },
-          "items": {
+          "messages": {
             "type": "array",
             "items": {
-              "$ref": "#/components/schemas/KernelContent"
+              "$ref": "#/components/schemas/ChatMessageDto"
             },
             "nullable": true
           }
         },
         "additionalProperties": false
       },
-      "ChatSession": {
+      "ChatMessageDto": {
+        "type": "object",
+        "properties": {
+          "role": {
+            "type": "string",
+            "nullable": true
+          },
+          "message": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "ChatPromptRequest": {
+        "type": "object",
+        "properties": {
+          "prompt": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "ChatSessionDto": {
         "type": "object",
         "properties": {
           "id": {
@@ -307,37 +226,12 @@
             "type": "string",
             "nullable": true
           },
-          "chatHistoryJson": {
-            "type": "string",
-            "nullable": true
-          },
           "chatHistory": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/ChatMessageContent"
-            },
-            "nullable": true,
-            "readOnly": true
-          }
-        },
-        "additionalProperties": false
-      },
-      "KernelContent": {
-        "type": "object",
-        "properties": {
-          "mimeType": {
-            "type": "string",
-            "nullable": true
+            "$ref": "#/components/schemas/ChatHistoryDto"
           },
-          "modelId": {
-            "type": "string",
-            "nullable": true
-          },
-          "metadata": {
-            "type": "object",
-            "additionalProperties": {
-              "nullable": true
-            },
+          "version": {
+            "type": "integer",
+            "format": "int32",
             "nullable": true
           }
         },
@@ -346,6 +240,9 @@
     }
   },
   "tags": [
+    {
+      "name": "CV"
+    },
     {
       "name": "ChatSession"
     }

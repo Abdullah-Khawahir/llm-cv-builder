@@ -1,22 +1,30 @@
 root = true
 
 [*.cs]
+# CA1031: Do not catch general exception types (forces you to be specific)
+dotnet_diagnostic.CA1031.severity = warning
 
+# CA2201: Do not raise reserved exception types
+dotnet_diagnostic.CA2201.severity = warning
+
+# CA1849: Call async methods when in an async method 
+# (Crucial: prevents synchronous AggregateExceptions from crashing async flows)
+dotnet_diagnostic.CA1849.severity = warning
 
 # ========================================
 # Example: Minimal Configuration
 # ========================================
 # Uncomment to analyze only methods and constructors:
-# throws_analyzer_analyze_methods = true
-# throws_analyzer_analyze_constructors = true
-# throws_analyzer_analyze_destructors = false
-# throws_analyzer_analyze_operators = false
-# throws_analyzer_analyze_conversion_operators = false
-# throws_analyzer_analyze_properties = false
-# throws_analyzer_analyze_accessors = false
-# throws_analyzer_analyze_local_functions = false
-# throws_analyzer_analyze_lambdas = false
-# throws_analyzer_analyze_anonymous_methods = false
+throws_analyzer_analyze_methods = true
+throws_analyzer_analyze_constructors = true
+throws_analyzer_analyze_destructors = false
+throws_analyzer_analyze_operators = false
+throws_analyzer_analyze_conversion_operators = false
+throws_analyzer_analyze_properties = false
+throws_analyzer_analyze_accessors = false
+throws_analyzer_analyze_local_functions = false
+throws_analyzer_analyze_lambdas = false
+throws_analyzer_analyze_anonymous_methods = false
 
 
 # ========================================

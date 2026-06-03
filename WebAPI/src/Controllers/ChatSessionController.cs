@@ -1,61 +1,61 @@
 namespace WebAPI.Controllers;
 
 [ApiController]
-[Route("api/[controller]")]
-public class ChatSessionController : ControllerBase
+[Route("api/chat-sessions")]
+public sealed class ChatSessionController(IChatSessionService sessions) : ControllerBase
 {
-    private readonly IChatSessionService _service;
+    private readonly IChatSessionService _sessions = sessions;
 
-    public ChatSessionController(IChatSessionService service)
+    [HttpGet]
+    public async Task<ActionResult<ChatSessionDto[]>> GetAllAsync()
     {
-        _service = service;
-    }
-
-    [HttpGet("history")]
-    public async Task<ActionResult<List<ChatSession>>> GetUserHistoryAsync()
-    {
-        var sessions = await _service.GetAllSessionsAsync();
+        var sessions = await _sessions.GetAllAsync() ?? [];
         return Ok(sessions);
     }
 
-    [HttpGet("{id:Guid}")]
-    public async Task<ActionResult<ChatSession>> GetChatSessionByIdAsync([FromRoute] Guid id)
+    [HttpGet("{id:guid}")]
+    public async Task<ActionResult<ChatSessionDto>> GetById(Guid id)
     {
-        var chat = await _service.GetByIdAsync(id);
-        if (chat is null)
-        {
-            return NotFound();
-        }
-        return chat;
-    }
-    [HttpPost("chat/{id}/stream")]
-    public async Task<IAsyncEnumerable<string>> StreamChat(Guid id, [FromBody] string prompt)
-    {
-        var stream = _service.ProcessPromptStreamingAsync(id, prompt);
-
-        return stream;
-    }
-
-    [HttpPost("{id:Guid}/chat")]
-    public async Task<ActionResult<ChatSession>> ChatPromptAsync([FromRoute] Guid id, [FromBody] string prompt)
-    {
-        var session = await _service.ProcessPromptAsync(id, prompt);
+        var session = await _sessions.GetByIdAsync(id);
 
         if (session is null)
         {
             return NotFound();
         }
-        return session;
+
+        return Ok(session);
     }
 
-    [HttpPost("new")]
-    public async Task<ActionResult<List<ChatSession>>> CreateNewAsync()
+    [HttpPost]
+    public async Task<ActionResult<ChatSessionDto>> CreateAsync()
     {
-        var session = await _service.CreateNewAsync();
-        return CreatedAtAction(nameof(GetChatSessionByIdAsync), new { id = session.Id }, session);
+        var session = await _sessions.CreateAsync();
+
+        return CreatedAtAction(
+            nameof(GetById),
+            new { id = session.Id },
+            session);
     }
 
+    [HttpPost("{id:guid}/stream")]
+    [Produces("text/event-stream")]
+    public async Task StreamAsync(
+        Guid id,
+        [FromBody] ChatPromptRequest request,
+        CancellationToken cancellationToken)
+    {
+        Response.StatusCode = 200;
+        Response.ContentType = "text/event-stream";
+        Response.Headers.CacheControl = "no-cache";
+        Response.Headers.Connection = "keep-alive";
+
+        await foreach (var evt in _sessions.StreamAsync(id, request.Prompt, cancellationToken))
+        {
+            var json = JsonSerializer.Serialize(evt);
+
+            await Response.WriteAsync($"data: {json}\n\n", cancellationToken);
+
+            await Response.Body.FlushAsync(cancellationToken);
+        }
+    }
 }
-
-
-

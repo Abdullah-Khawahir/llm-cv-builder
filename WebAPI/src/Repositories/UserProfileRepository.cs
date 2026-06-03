@@ -1,6 +1,6 @@
 namespace WebAPI.Repositories;
 
-public class UserProfileRepository : IRepository<UserProfile>
+public sealed class UserProfileRepository : IRepository<UserProfile>
 {
     private readonly ApplicationDbContext _context;
     public UserProfileRepository(ApplicationDbContext context) => _context = context;

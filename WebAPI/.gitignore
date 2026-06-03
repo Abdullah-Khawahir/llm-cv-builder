@@ -5,3 +5,4 @@ Migrations
 app.db
 appsettings.json
 *.vim
+graphify-out/

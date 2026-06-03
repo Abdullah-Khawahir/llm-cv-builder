@@ -1,133 +1,158 @@
+using System.Runtime.CompilerServices;
+
 namespace WebAPI.Services;
 
-public class ChatSessionService : IChatSessionService
+public interface IChatSessionService
+{
+    Task<ChatSessionDto?> GetByIdAsync(Guid id);
+    Task<ChatSessionDto> CreateAsync();
+    Task<ChatSession?> GetEntityAsync(Guid id);
+
+    Task UpdateHtmlAsync(Guid id, string html);
+
+    Task SaveHistoryAsync(Guid id, ChatHistory history);
+
+
+    IAsyncEnumerable<ChatStreamEvent> StreamAsync(
+        Guid sessionId,
+        string prompt,
+        CancellationToken cancellationToken = default);
+
+    Task<IEnumerable<ChatSessionDto>> GetAllAsync();
+}
+
+
+public sealed class ChatSessionService : IChatSessionService
 {
     private readonly ApplicationDbContext _db;
     private readonly ILogger<ChatSessionService> _log;
 
-    public ChatSessionService(ApplicationDbContext db, Kernel kernel, ILogger<ChatSessionService> log)
+    public ChatSessionService(
+        ApplicationDbContext db,
+        ILogger<ChatSessionService> log)
     {
         _db = db;
         _log = log;
     }
 
-    public async IAsyncEnumerable<string> ProcessPromptStreamingAsync(Guid id, string prompt)
+    public async Task<ChatSessionDto?> GetByIdAsync(Guid id)
     {
-        var session = await GetSessionForPromptAsync(id);
+        return await _db.ChatSessions
+            .AsNoTracking()
+            .Where(x => x.Id == id)
+            .Select(x => ChatSessionMapper.ToDTO(x))
+            .FirstOrDefaultAsync();
+    }
+
+    public async Task<ChatSession?> GetEntityAsync(Guid id)
+    {
+        return await _db.ChatSessions
+            .FirstOrDefaultAsync(x => x.Id == id);
+    }
+
+    public async Task<ChatSessionDto> CreateAsync()
+    {
+        var session = new ChatSession(Guid.NewGuid(), string.Empty, JsonSerializer.Serialize(new ChatHistory()), default);
+
+        _db.ChatSessions.Add(session);
+
+        await _db.SaveChangesAsync();
+
+        return ChatSessionMapper.ToDTO(session);
+    }
+
+    public async Task UpdateHtmlAsync(Guid id, string html)
+    {
+        var session = await GetEntityAsync(id) ?? throw new InvalidOperationException("Session not found.");
+
+        _db.Entry(session).CurrentValues.SetValues(session with { HtmlDocument = html });
+
+        await _db.SaveChangesAsync();
+    }
+
+    public async Task SaveHistoryAsync(Guid id, ChatHistory history)
+    {
+        var session = await GetEntityAsync(id) ?? throw new InvalidOperationException("Session not found."); ;
+
+        _db.Entry(session)
+            .CurrentValues
+            .SetValues(
+                session with
+                {
+                    ChatHistoryJson = JsonSerializer.Serialize(history)
+                });
+
+        await _db.SaveChangesAsync();
+    }
+
+
+    public async IAsyncEnumerable<ChatStreamEvent> StreamAsync(
+        Guid sessionId,
+        string prompt,
+        [EnumeratorCancellation] CancellationToken cancellationToken = default)
+    {
+        var session = await GetEntityAsync(sessionId);
+
         if (session is null)
         {
-            yield return "Error: Session not found.";
+            yield return ChatStreamEvent.Error("Session not found.");
             yield break;
         }
 
-        var history = JsonSerializer.Deserialize<ChatHistory>(session.ChatHistoryJson,
-            new JsonSerializerOptions { AllowOutOfOrderMetadataProperties = true }) ?? new ChatHistory();
+        var history = session.ChatHistory;
 
-        if (history.FirstOrDefault(h => h.Role == AuthorRole.System) is null)
-        {
-            history.AddSystemMessage("you are a CV creating assistant. you will make CV for the user by calling the function to write the CV.");
-        }
+        EnsureSystemPrompt(history);
 
         history.AddUserMessage(prompt);
 
-        var settings = new OpenAIPromptExecutionSettings { FunctionChoiceBehavior = FunctionChoiceBehavior.Auto() };
+        var kernel = CreateKernel(sessionId);
 
-        var kernalBuilder = Kernel.CreateBuilder();
-        kernalBuilder.Plugins.AddFromObject(new SessionFunctions(session, _db));
-        kernalBuilder.AddOpenAIChatCompletion(
-            modelId: "openai/gpt-oss-120b:free",
-            apiKey: Environment.GetEnvironmentVariable("OPENROUTER_API_KEY"),
-            endpoint: new Uri("https://openrouter.ai/api/v1"),
-            httpClient: new HttpClient
-            {
-                DefaultRequestHeaders =
-                {
-                { "HTTP-Referer", "http://localhost:5044" },
-                { "X-Title", "CV-App" }
-                }
-            });
-
-        var kernel = kernalBuilder.Build();
         var chatService = kernel.GetRequiredService<IChatCompletionService>();
 
-        // 2. Track the full response string to update DB later
-        var fullResponseBuilder = new StringBuilder();
-
-        // 3. Invoke streaming. Semantic Kernel handles tool calls automatically behind the scenes,
-        // but chunks that represent function arguments won't usually yield text content to the user.
-        await foreach (var chatChunk in chatService.GetStreamingChatMessageContentsAsync(history, settings, kernel))
+        var settings = new OpenAIPromptExecutionSettings
         {
-            if (!string.IsNullOrEmpty(chatChunk.Content))
-            {
-                fullResponseBuilder.Append(chatChunk.Content);
-                yield return chatChunk.Content; // Stream text back to controller/client immediately
-            }
-        }
-
-        // 4. After the stream completes, save the aggregated response to history
-        history.AddAssistantMessage(fullResponseBuilder.ToString());
-
-        // We reload session just in case 'SessionFunctions' modified it during the stream execution
-        var updatedSession = await GetSessionForPromptAsync(id);
-        if (updatedSession != null)
-        {
-            updatedSession.ChatHistoryJson = JsonSerializer.Serialize(history);
-            await _db.SaveChangesAsync();
-        }
-    }
-
-
-
-    public async Task<ICollection<ChatSession>> GetAllSessionsAsync()
-    {
-        return await _db.ChatSessions.AsNoTracking().ToListAsync();
-    }
-
-    public async Task<ChatSession?> GetByIdAsync(Guid id)
-    {
-        return await _db.ChatSessions.AsNoTracking().FirstOrDefaultAsync(c => c.Id == id);
-    }
-
-    public async Task<ChatSession?> GetSessionForPromptAsync(Guid id)
-    {
-        return await _db.ChatSessions.FirstOrDefaultAsync(c => c.Id == id);
-    }
-
-    public async Task<ChatSession> CreateNewAsync()
-    {
-        var session = new ChatSession
-        {
-            Id = Guid.NewGuid(),
-            HtmlDocument = string.Empty,
-            ChatHistoryJson = JsonSerializer.Serialize(new ChatHistory()),
+            FunctionChoiceBehavior = FunctionChoiceBehavior.Auto()
         };
-        await _db.ChatSessions.AddAsync(session);
-        await _db.SaveChangesAsync();
-        return session;
-    }
 
-    public async Task<ChatSession?> ProcessPromptAsync(Guid id, string prompt)
-    {
-        var session = await GetSessionForPromptAsync(id);
-        if (session is null) return null;
+        var assistantMessage = new StringBuilder();
 
-        var history = JsonSerializer.Deserialize<ChatHistory>(session.ChatHistoryJson,
-            new JsonSerializerOptions { AllowOutOfOrderMetadataProperties = true }) ?? new ChatHistory();
+        yield return ChatStreamEvent.Status("thinking");
 
-        if (history.FirstOrDefault(h => h.Role == AuthorRole.System) is null)
+        await foreach (var chunk in chatService.GetStreamingChatMessageContentsAsync(
+            history,
+            settings,
+            kernel,
+            cancellationToken))
         {
-            history.AddSystemMessage("you are a CV creating assistant. you will make CV for the user by calling the function to write the CV.");
+            if (string.IsNullOrWhiteSpace(chunk.Content))
+            {
+                continue;
+            }
+
+            assistantMessage.Append(chunk.Content);
+
+            yield return ChatStreamEvent.Token(chunk.Content);
         }
 
-        history.AddUserMessage(prompt);
+        history.AddAssistantMessage(assistantMessage.ToString());
 
-        var settings = new OpenAIPromptExecutionSettings { FunctionChoiceBehavior = FunctionChoiceBehavior.Auto() };
+        await SaveHistoryAsync(sessionId, history);
 
-        var kernalBuilder = Kernel.CreateBuilder();
+        yield return ChatStreamEvent.Completed();
 
-        kernalBuilder.Plugins.AddFromObject(new SessionFunctions(session, _db));
-        kernalBuilder.AddOpenAIChatCompletion(
-            modelId: "openai/gpt-oss-120b:free",
+        yield return ChatStreamEvent.UpdatedSession(ChatSessionMapper.ToDTO(session));
+    }
+
+
+    private Kernel CreateKernel(Guid sessionId)
+    {
+        var builder = Kernel.CreateBuilder();
+
+        builder.Plugins.AddFromObject(
+            new CVFunctions(this, sessionId));
+
+        builder.AddOpenAIChatCompletion(
+            modelId: "google/gemini-2.5-flash-lite",
             apiKey: Environment.GetEnvironmentVariable("OPENROUTER_API_KEY"),
             endpoint: new Uri("https://openrouter.ai/api/v1"),
             httpClient: new HttpClient
@@ -139,46 +164,83 @@ public class ChatSessionService : IChatSessionService
                 }
             });
 
-        var kernel = kernalBuilder.Build();
-        var chatService = kernel.GetRequiredService<IChatCompletionService>();
-
-        var response = await chatService.GetChatMessageContentAsync(history, settings, kernel);
-
-        history.AddAssistantMessage(response.Content ?? string.Empty);
-
-        var historyJson = JsonSerializer.Serialize(history);
-        session.ChatHistoryJson = historyJson;
-
-        await _db.SaveChangesAsync();
-        return session;
+        return builder.Build();
     }
 
-
-    public class SessionFunctions
+    private static ChatHistory DeserializeHistory(string json)
     {
-        private readonly ChatSession _session;
-        private readonly ApplicationDbContext _db;
-        public SessionFunctions(ChatSession session, ApplicationDbContext db)
+        return JsonSerializer.Deserialize<ChatHistory>(
+                   json,
+                   new JsonSerializerOptions
+                   {
+                       AllowOutOfOrderMetadataProperties = true
+                   })
+               ?? new ChatHistory();
+    }
+
+    private static void EnsureSystemPrompt(ChatHistory history)
+    {
+        if (history.Any(x => x.Role == AuthorRole.System))
         {
-            _session = session;
-            _db = db;
+            return;
+        }
+
+        history.AddSystemMessage(
+            """
+            You are a CV creation assistant. you Always use your tools to show stuff to user.
+
+            The user sees the generated HTML rendered as PDF using WeasyPrint. 
+
+            IMPORTANT:
+            - Always generate valid semantic HTML.
+            - Always include @page CSS rules.
+            - Avoid overflow.
+            - Prefer one-page layouts.
+            - Keep spacing compact.
+            - Optimize for PDF rendering.
+
+            the user must not know anything about the html and do not tell the user
+            anything about rendering or technical stuff.
+            """
+        );
+    }
+
+    public async Task<IEnumerable<ChatSessionDto>> GetAllAsync()
+    {
+        return await _db.ChatSessions.AsNoTracking()
+            .Select(e => ChatSessionMapper.ToDTO(e))
+            .ToListAsync();
+    }
+
+    public sealed class CVFunctions
+    {
+        private readonly IChatSessionService _sessions;
+        private readonly Guid _sessionId;
+
+        public CVFunctions(
+            IChatSessionService sessions,
+            Guid sessionId)
+        {
+            _sessions = sessions;
+            _sessionId = sessionId;
         }
 
         [KernelFunction("WriteCV")]
-        [Description("Writes the provided HTML and saves it.")]
+        [Description("Writes and saves the generated CV HTML. the written html will be rendered to the user")]
         public async Task<bool> WriteCVAsync(string html)
         {
-            _session.HtmlDocument = html;
-            _db.ChatSessions.Update(_session);
-            await _db.SaveChangesAsync();
+            await _sessions.UpdateHtmlAsync(_sessionId, html);
+
             return true;
         }
 
         [KernelFunction("GetCV")]
-        [Description("return the currently saved CV")]
-        public string GetCurrentCVAsync()
+        [Description("Returns the current saved CV HTML.")]
+        public async Task<string> GetCurrentCVAsync()
         {
-            return _session.HtmlDocument;
+            var session = await _sessions.GetByIdAsync(_sessionId);
+
+            return session?.HtmlDocument ?? string.Empty;
         }
     }
 }

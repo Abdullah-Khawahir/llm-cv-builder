@@ -1,5 +1,11 @@
 var builder = WebApplication.CreateBuilder(args);
 
+builder.Services
+    .AddOptions<AppSettings>()
+    .Bind(builder.Configuration)
+    .ValidateDataAnnotations()
+    .ValidateOnStart();
+
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowFrontend",
@@ -26,17 +32,26 @@ Log.Logger = new LoggerConfiguration()
 
 builder.Host.UseSerilog();
 
+builder.Services.AddMinio((minio) =>
+        minio
+        .WithCredentials("minioadmin", "minioadmin")
+        .WithEndpoint("localhost:9000")
+        .WithSSL(false)
+        .Build()
+        );
+
 builder.Services.AddKernel()
     .AddOpenAIChatCompletion(
-        modelId: "openai/gpt-oss-120b:free",
-        apiKey: Environment.GetEnvironmentVariable("OPENROUTER_API_KEY"),
-        endpoint: new Uri("https://openrouter.ai/api/v1"),
+        modelId: "gemini-3.1-flash-lite",
+        apiKey: Environment.GetEnvironmentVariable("CVAPP_GEMINI_API_KEY")!,
+        // endpoint: new Uri("https://generativelanguage.googleapis.com/v1beta/models"),
         httpClient: new HttpClient
         {
             DefaultRequestHeaders =
             {
                 { "HTTP-Referer", "http://localhost:5044" },
                 { "X-Title", "CV-App" },
+                {"X-OpenRouter-Title", "CV-APP"},
             },
         }
     );
@@ -86,8 +101,12 @@ builder.Services.AddOpenTelemetry()
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
+builder.Services.AddControllers();
+
 var app = builder.Build();
+
 app.UseCors("AllowFrontend");
+app.UseMiddleware<ErrorHandlerMiddleware>();
 if (app.Environment.IsDevelopment())
 {
     app.MapOpenApi();

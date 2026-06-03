@@ -1,6 +1,6 @@
 namespace WebAPI.Repositories;
 
-public class AwardRepository : IRepository<Award>
+public sealed class AwardRepository : IRepository<Award>
 {
     private readonly ApplicationDbContext _context;
 

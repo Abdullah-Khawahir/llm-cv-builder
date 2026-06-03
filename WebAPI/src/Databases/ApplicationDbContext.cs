@@ -1,6 +1,6 @@
 namespace WebAPI.Databases;
 
-public class ApplicationDbContext : DbContext
+public sealed class ApplicationDbContext : DbContext
 {
     public required DbSet<User> Users { get; set; }
     public required DbSet<Award> Awards { get; set; }

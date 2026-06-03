@@ -1,6 +1,6 @@
 namespace WebAPI.Repositories;
 
-public class ProjectRepository : IRepository<Project>
+public sealed class ProjectRepository : IRepository<Project>
 {
     private readonly ApplicationDbContext _context;
     public ProjectRepository(ApplicationDbContext context) => _context = context;

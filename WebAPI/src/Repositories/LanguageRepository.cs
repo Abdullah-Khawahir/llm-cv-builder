@@ -1,13 +1,6 @@
-
-
-
-
-
-
-
 namespace WebAPI.Repositories;
 
-public class LanguageRepository : IRepository<Language>
+public sealed class LanguageRepository : IRepository<Language>
 {
     private readonly ApplicationDbContext _context;
     public LanguageRepository(ApplicationDbContext context) => _context = context;

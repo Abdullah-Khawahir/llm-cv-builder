@@ -1,13 +1,6 @@
-
-
-
-
-
-
-
 namespace WebAPI.Repositories;
 
-public class EducationRepository : IRepository<Education>
+public sealed class EducationRepository : IRepository<Education>
 {
     private readonly ApplicationDbContext _context;
     public EducationRepository(ApplicationDbContext context) => _context = context;

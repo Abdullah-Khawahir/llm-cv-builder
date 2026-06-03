@@ -1,6 +1,6 @@
 namespace WebAPI.Repositories;
 
-public class SkillRepository : IRepository<Skill>
+public sealed class SkillRepository : IRepository<Skill>
 {
     private readonly ApplicationDbContext _context;
     public SkillRepository(ApplicationDbContext context) => _context = context;

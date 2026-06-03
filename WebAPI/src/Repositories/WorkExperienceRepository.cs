@@ -1,7 +1,7 @@
 
 namespace WebAPI.Repositories;
 
-public class WorkExperienceRepository : IRepository<WorkExperience>
+public sealed class WorkExperienceRepository : IRepository<WorkExperience>
 {
     private readonly ApplicationDbContext _context;
     public WorkExperienceRepository(ApplicationDbContext context) => _context = context;

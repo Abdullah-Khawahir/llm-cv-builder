@@ -1,6 +1,6 @@
 namespace WebAPI.Repositories;
 
-public class CertificateRepository : IRepository<Certificate>
+public sealed class CertificateRepository : IRepository<Certificate>
 {
     private readonly ApplicationDbContext _context;
     public CertificateRepository(ApplicationDbContext context) => _context = context;

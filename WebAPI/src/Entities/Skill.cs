@@ -1,10 +1,12 @@
 namespace WebAPI.Entities;
 
-public class Skill
+public sealed record Skill(
+    Guid Id,
+    Guid UserProfileId,
+    string Name,
+    int Proficiency
+    )
 {
-    public Guid Id { get; set; }
-    public Guid UserProfileId { get; set; }
-    public string Name { get; set; } = String.Empty;
-    public int Proficiency { get; set; }
-    public UserProfile UserProfile { get; set; } = null!;
-}
+    public UserProfile UserProfile { get; init; } = default!;
+
+};

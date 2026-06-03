@@ -10,31 +10,26 @@
  * ---------------------------------------------------------------
  */
 
-export interface AuthorRole {
-  label?: string | null;
+export interface ChatHistoryDto {
+  messages?: ChatMessageDto[] | null;
 }
 
-export interface ChatMessageContent {
-  mimeType?: string | null;
-  modelId?: string | null;
-  metadata?: Record<string, any> | null;
-  authorName?: string | null;
-  role?: AuthorRole;
-  items?: KernelContent[] | null;
+export interface ChatMessageDto {
+  role?: string | null;
+  message?: string | null;
 }
 
-export interface ChatSession {
+export interface ChatPromptRequest {
+  prompt?: string | null;
+}
+
+export interface ChatSessionDto {
   /** @format uuid */
   id?: string;
   htmlDocument?: string | null;
-  chatHistoryJson?: string | null;
-  chatHistory?: ChatMessageContent[] | null;
-}
-
-export interface KernelContent {
-  mimeType?: string | null;
-  modelId?: string | null;
-  metadata?: Record<string, any> | null;
+  chatHistory?: ChatHistoryDto;
+  /** @format int32 */
+  version?: number | null;
 }
 
 export type QueryParamsType = Record<string | number, any>;
@@ -303,13 +298,27 @@ export class Api<
     /**
      * No description
      *
-     * @tags ChatSession
-     * @name ChatSessionHistoryList
-     * @request GET:/api/ChatSession/history
+     * @tags CV
+     * @name CvPreviewDetail
+     * @request GET:/api/cv/preview/{id}
      */
-    chatSessionHistoryList: (params: RequestParams = {}) =>
-      this.request<ChatSession[], any>({
-        path: `/api/ChatSession/history`,
+    cvPreviewDetail: (id: string, params: RequestParams = {}) =>
+      this.request<void, any>({
+        path: `/api/cv/preview/${id}`,
+        method: "GET",
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags ChatSession
+     * @name ChatSessionsList
+     * @request GET:/api/chat-sessions
+     */
+    chatSessionsList: (params: RequestParams = {}) =>
+      this.request<ChatSessionDto[], any>({
+        path: `/api/chat-sessions`,
         method: "GET",
         format: "json",
         ...params,
@@ -319,12 +328,27 @@ export class Api<
      * No description
      *
      * @tags ChatSession
-     * @name ChatSessionDetail
-     * @request GET:/api/ChatSession/{id}
+     * @name ChatSessionsCreate
+     * @request POST:/api/chat-sessions
      */
-    chatSessionDetail: (id: string, params: RequestParams = {}) =>
-      this.request<ChatSession, any>({
-        path: `/api/ChatSession/${id}`,
+    chatSessionsCreate: (params: RequestParams = {}) =>
+      this.request<ChatSessionDto, any>({
+        path: `/api/chat-sessions`,
+        method: "POST",
+        format: "json",
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags ChatSession
+     * @name ChatSessionsDetail
+     * @request GET:/api/chat-sessions/{id}
+     */
+    chatSessionsDetail: (id: string, params: RequestParams = {}) =>
+      this.request<ChatSessionDto, any>({
+        path: `/api/chat-sessions/${id}`,
         method: "GET",
         format: "json",
         ...params,
@@ -334,56 +358,19 @@ export class Api<
      * No description
      *
      * @tags ChatSession
-     * @name ChatSessionChatStreamCreate
-     * @request POST:/api/ChatSession/chat/{id}/stream
+     * @name ChatSessionsStreamCreate
+     * @request POST:/api/chat-sessions/{id}/stream
      */
-    chatSessionChatStreamCreate: (
+    chatSessionsStreamCreate: (
       id: string,
-      data: string,
+      data: ChatPromptRequest,
       params: RequestParams = {},
     ) =>
-      this.request<string[], any>({
-        path: `/api/ChatSession/chat/${id}/stream`,
+      this.request<void, any>({
+        path: `/api/chat-sessions/${id}/stream`,
         method: "POST",
         body: data,
         type: ContentType.Json,
-        format: "json",
-        ...params,
-      }),
-
-    /**
-     * No description
-     *
-     * @tags ChatSession
-     * @name ChatSessionChatCreate
-     * @request POST:/api/ChatSession/{id}/chat
-     */
-    chatSessionChatCreate: (
-      id: string,
-      data: string,
-      params: RequestParams = {},
-    ) =>
-      this.request<ChatSession, any>({
-        path: `/api/ChatSession/${id}/chat`,
-        method: "POST",
-        body: data,
-        type: ContentType.Json,
-        format: "json",
-        ...params,
-      }),
-
-    /**
-     * No description
-     *
-     * @tags ChatSession
-     * @name ChatSessionNewCreate
-     * @request POST:/api/ChatSession/new
-     */
-    chatSessionNewCreate: (params: RequestParams = {}) =>
-      this.request<ChatSession[], any>({
-        path: `/api/ChatSession/new`,
-        method: "POST",
-        format: "json",
         ...params,
       }),
   };

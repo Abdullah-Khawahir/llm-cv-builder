@@ -1,6 +1,6 @@
 namespace WebAPI.Repositories;
 
-public class UserRepository
+public sealed class UserRepository
 {
     private readonly ApplicationDbContext _context;
 

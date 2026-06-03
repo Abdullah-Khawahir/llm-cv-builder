@@ -1,13 +1,14 @@
 namespace WebAPI.Entities;
 
-public class Project
+public sealed record Project(
+    Guid Id,
+    Guid UserProfileId,
+    string Name,
+    string Description,
+    string Url,
+    string TechStack,
+    int Order
+    )
 {
-    public Guid Id { get; set; }
-    public Guid UserProfileId { get; set; }
-    public string Name { get; set; } = String.Empty;
-    public string Description { get; set; } = String.Empty;
-    public string Url { get; set; } = String.Empty;
-    public string TechStack { get; set; } = String.Empty;
-    public int Order { get; set; }
-    public UserProfile UserProfile { get; set; } = null!;
-}
+    public UserProfile UserProfile { get; init; } = default!;
+};
