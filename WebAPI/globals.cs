@@ -25,3 +25,4 @@ global using WebAPI.Services;
 global using WebAPI;
 global using WebAPI.Mappers;
 global using Minio;
+global using WebAPI.Utils;

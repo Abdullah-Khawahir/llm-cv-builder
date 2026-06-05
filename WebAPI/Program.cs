@@ -1,10 +1,34 @@
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.IdentityModel.Tokens;
+
+Log.Logger = new LoggerConfiguration()
+    .MinimumLevel.Information()
+    .MinimumLevel.Override("Microsoft.SemanticKernel", Serilog.Events.LogEventLevel.Debug)
+    .MinimumLevel.Override("Microsoft.SemanticKernel.Connectors", Serilog.Events.LogEventLevel.Verbose)
+    .Enrich.FromLogContext()
+    .WriteTo.Console(outputTemplate:
+        "[{Timestamp:HH:mm:ss} {Level:u3}] {Message:lj}{NewLine}{Exception}")
+    .WriteTo.File("logs/app.log", rollingInterval: RollingInterval.Day)
+    .CreateLogger();
+
 var builder = WebApplication.CreateBuilder(args);
+
+
+builder.Logging.AddSerilog();
+builder.Logging.AddFilter("Microsoft.SemanticKernel", LogLevel.Trace);
+builder.Logging.AddFilter("Microsoft.SemanticKernel.Connectors", LogLevel.Trace);
+builder.Logging.AddFilter("Microsoft", LogLevel.Warning);
+
+builder.Host.UseSerilog();
 
 builder.Services
     .AddOptions<AppSettings>()
     .Bind(builder.Configuration)
     .ValidateDataAnnotations()
     .ValidateOnStart();
+
+var appSettings = builder.Configuration
+    .Get<AppSettings>()!;
 
 builder.Services.AddCors(options =>
 {
@@ -17,20 +41,8 @@ builder.Services.AddCors(options =>
                 .AllowAnyOrigin();
         });
 });
-builder.Logging.AddOpenTelemetry(logging =>
-{
-    logging.IncludeFormattedMessage = true;
-    logging.IncludeScopes = true;
-    logging.AddOtlpExporter();
-});
 
-Log.Logger = new LoggerConfiguration()
-    .WriteTo.Console()
-    .WriteTo.File("logs/app.log", rollingInterval: RollingInterval.Day)
-    .Enrich.FromLogContext()
-    .CreateLogger();
 
-builder.Host.UseSerilog();
 
 builder.Services.AddMinio((minio) =>
         minio
@@ -64,6 +76,16 @@ var dataSource = dataSourceBuilder.Build();
 
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseNpgsql(dataSource));
+
+
+builder.Services.AddIdentity<User, IdentityRole<Guid>>(options =>
+{
+    options.Password.RequireDigit = true;
+    options.Password.RequiredLength = 6;
+})
+.AddEntityFrameworkStores<ApplicationDbContext>()
+.AddDefaultTokenProviders();
+
 
 builder.Services.AddControllers();
 builder.Services.AddScoped<IChatSessionService, ChatSessionService>();
@@ -101,12 +123,42 @@ builder.Services.AddOpenTelemetry()
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
+builder.Services.AddAuthentication(options =>
+{
+    options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+    options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+})
+.AddJwtBearer(options =>
+{
+    options.TokenValidationParameters = new TokenValidationParameters
+    {
+        ValidateIssuer = true,
+        ValidateAudience = true,
+        ValidateLifetime = true,
+        ValidateIssuerSigningKey = true,
+        ValidIssuer = appSettings.Jwt.Issuer,
+        ValidAudience = appSettings.Jwt.Audience,
+        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(appSettings.Jwt.Key))
+    };
+})
+.AddGoogle(options =>
+{
+    options.ClientId = appSettings.Google.ClientId;
+    options.ClientSecret = appSettings.Google.ClientSecret;
+    options.SignInScheme = IdentityConstants.ExternalScheme;
+}); ;
+
 builder.Services.AddControllers();
 
 var app = builder.Build();
+app.UseMiddleware<ErrorHandlerMiddleware>();
+
+app.UseHttpsRedirection();
+
+app.UseAuthentication(); // Must come BEFORE UseAuthorization
+app.UseAuthorization();
 
 app.UseCors("AllowFrontend");
-app.UseMiddleware<ErrorHandlerMiddleware>();
 if (app.Environment.IsDevelopment())
 {
     app.MapOpenApi();

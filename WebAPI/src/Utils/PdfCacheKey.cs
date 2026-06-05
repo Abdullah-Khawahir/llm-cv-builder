@@ -1,3 +1,5 @@
+namespace WebAPI.Utils;
+
 public static class PdfCacheKey
 {
     public static string FromHtml(string html)

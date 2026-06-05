@@ -1,3 +1,5 @@
+using System.Text.Json.Serialization;
+
 namespace WebAPI.DTOs;
 
 public sealed record ChatPromptRequest(
@@ -17,17 +19,30 @@ public sealed record ChatMessageDto(
     string Role,
     string Message
 );
+[JsonPolymorphic(TypeDiscriminatorPropertyName = "type")]
+[JsonDerivedType(typeof(Token), "token")]
+[JsonDerivedType(typeof(Error), "error")]
+[JsonDerivedType(typeof(SessionUpdate), "session_update")]
+[JsonDerivedType(typeof(Thinking), "thinking")]
+[JsonDerivedType(typeof(Completed), "completed")]
+public abstract record ChatStreamEvent;
 
-public sealed record ChatStreamEvent(string Type, string? Content = null, ChatSessionDto? ChatSessionDto = null)
+public sealed record Token(string Content) : ChatStreamEvent;
+public sealed record Error(string Message) : ChatStreamEvent;
+public sealed record SessionUpdate(ChatSessionDto ChatSessionDto) : ChatStreamEvent;
+public sealed record Thinking(string Message = "thinking") : ChatStreamEvent;
+public sealed record Completed(string Message = "completed") : ChatStreamEvent;
+
+public static class ChatStreamEventFactory
 {
-    public static ChatStreamEvent Token(string content) => new("token", content);
-
-    public static ChatStreamEvent Status(string content) => new("status", content);
-
-    public static ChatStreamEvent Error(string content) => new("error", content);
-
-    public static ChatStreamEvent UpdatedSession(ChatSessionDto session) => new("Updated", null, session);
-
-    public static ChatStreamEvent Completed() => new("completed");
-
+    extension(ChatStreamEvent)
+    {
+        public static Token CreateTokenEvent(string token) => new(token);
+        public static Error CreateErrorEvent(string message) => new(message);
+        public static SessionUpdate CreateSessionUpdateEvent(ChatSessionDto session) => new(session);
+        public static Thinking CreateThinkingEvent() => new();
+        public static Completed CreateCompletedEvent() => new();
+    }
 }
+
+

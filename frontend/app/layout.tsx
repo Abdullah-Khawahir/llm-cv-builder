@@ -1,20 +1,37 @@
 "use client"
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { Geist, Geist_Mono } from "next/font/google";
-import "./globals.css";
 
-const geistSans = Geist({ variable: "--font-geist-sans", subsets: ["latin"] });
-const geistMono = Geist_Mono({ variable: "--font-geist-mono", subsets: ["latin"] });
+import { AppSidebar } from "@/app/components/AppSidebar"
+import { SidebarProvider, SidebarTrigger, useSidebar } from "@/components/ui/sidebar"
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query"
+import "./globals.css"
+
 const queryClient = new QueryClient()
+
+function SidebarNav() {
+  const sidebar = useSidebar()
+  if (sidebar.state === "expanded") return null
+
+  return (
+    <nav className="h-full w-12 flex flex-col items-center">
+      <header className="h-12 flex items-center px-2">
+        <SidebarTrigger className="h-8 w-8 rounded-md hover:bg-muted border border-muted-foreground/20" />
+      </header>
+    </nav>
+  )
+}
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" >
+    <html>
       <body>
-        <QueryClientProvider client={queryClient} >
-        {children}
+        <QueryClientProvider client={queryClient}>
+          <SidebarProvider>
+            <AppSidebar />
+            <SidebarNav />
+            {children}
+          </SidebarProvider>
         </QueryClientProvider>
       </body>
     </html>
-  );
+  )
 }

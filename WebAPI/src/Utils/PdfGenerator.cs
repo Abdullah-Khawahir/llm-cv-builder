@@ -1,3 +1,5 @@
+namespace WebAPI.Utils;
+
 using System.Diagnostics;
 
 public static class PdfGenerator

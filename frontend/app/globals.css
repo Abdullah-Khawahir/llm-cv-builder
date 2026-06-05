@@ -121,9 +121,9 @@
     color: var(--muted-foreground);
   }
 
-  ul {
-    @apply list-disc list-inside;
-  }
+  /* ul { */
+  /*   @apply list-disc list-inside; */
+  /* } */
 
   ol {
     @apply list-decimal list-inside;

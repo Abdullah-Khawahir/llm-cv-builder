@@ -1,8 +1,10 @@
+using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
+
 namespace WebAPI.Databases;
 
-public sealed class ApplicationDbContext : DbContext
+public sealed class ApplicationDbContext : IdentityDbContext<User, IdentityRole<Guid>, Guid>
 {
-    public required DbSet<User> Users { get; set; }
+    // public required DbSet<User> Users { get; set; }
     public required DbSet<Award> Awards { get; set; }
     public required DbSet<Certificate> Certificates { get; set; }
     public required DbSet<Education> Educations { get; set; }

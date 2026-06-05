@@ -37,7 +37,7 @@ export default function PdfViewer({ pdfUrl }: PdfViewerProps) {
       if (!container) return;
 
       if (scaleMode === 'fitWidth') {
-        const targetScale = (container.clientWidth - 32) / 612; 
+        const targetScale = (container.clientWidth - 32) / 612;
         setScale(Math.max(0.5, Math.min(targetScale, 3.0)));
       } else if (scaleMode === 'fitHeight') {
         const targetScale = (container.clientHeight - 32) / 792;
@@ -74,10 +74,10 @@ export default function PdfViewer({ pdfUrl }: PdfViewerProps) {
 
   return (
     <div className="flex flex-col h-screen w-full bg-muted/30 border border-border rounded-xl overflow-hidden shadow-xs">
-      
+
       {/* Toolbar */}
       <div className="flex flex-wrap items-center justify-between gap-4 p-3 bg-card border-b border-border shadow-xs z-10">
-        
+
         {/* Document Info */}
         <div className="text-sm font-medium text-muted-foreground select-none px-2">
           {numPages ? `${numPages} Pages` : 'Loading document details...'}
@@ -93,11 +93,11 @@ export default function PdfViewer({ pdfUrl }: PdfViewerProps) {
           >
             <span className="block w-4 h-4 text-center leading-3">−</span>
           </button>
-          
+
           <span className="text-sm font-semibold text-foreground min-w-15 text-center select-none">
             {Math.round(scale * 100)}%
           </span>
-          
+
           <button
             onClick={handleZoomIn}
             disabled={scale >= 3.0}
@@ -111,22 +111,20 @@ export default function PdfViewer({ pdfUrl }: PdfViewerProps) {
 
           <button
             onClick={() => setScaleMode('fitWidth')}
-            className={`px-3 py-1.5 text-xs font-medium border rounded-lg transition cursor-pointer ${
-              scaleMode === 'fitWidth'
-                ? 'bg-primary text-primary-foreground border-primary'
-                : 'bg-card text-muted-foreground border-border hover:bg-muted'
-            }`}
+            className={`px-3 py-1.5 text-xs font-medium border rounded-lg transition cursor-pointer ${scaleMode === 'fitWidth'
+              ? 'bg-primary text-primary-foreground border-primary'
+              : 'bg-card text-muted-foreground border-border hover:bg-muted'
+              }`}
           >
             Fit Width
           </button>
 
           <button
             onClick={() => setScaleMode('fitHeight')}
-            className={`px-3 py-1.5 text-xs font-medium border rounded-lg transition cursor-pointer ${
-              scaleMode === 'fitHeight'
-                ? 'bg-primary text-primary-foreground border-primary'
-                : 'bg-card text-muted-foreground border-border hover:bg-muted'
-            }`}
+            className={`px-3 py-1.5 text-xs font-medium border rounded-lg transition cursor-pointer ${scaleMode === 'fitHeight'
+              ? 'bg-primary text-primary-foreground border-primary'
+              : 'bg-card text-muted-foreground border-border hover:bg-muted'
+              }`}
           >
             Fit Height
           </button>
@@ -134,7 +132,7 @@ export default function PdfViewer({ pdfUrl }: PdfViewerProps) {
       </div>
 
       {/* Continuous Scroll Canvas Container */}
-      <div 
+      <div
         ref={containerRef}
         className="flex-1 overflow-auto p-6 flex flex-col items-center bg-muted"
         style={{ userSelect: 'text', WebkitUserSelect: 'text' }}
@@ -145,12 +143,11 @@ export default function PdfViewer({ pdfUrl }: PdfViewerProps) {
           onLoadError={onDocumentLoadError}
           loading={<div className="p-8 text-muted-foreground font-medium">Loading document...</div>}
           error={<div className="p-8 text-destructive font-medium">Failed to load PDF</div>}
-          className="flex flex-col gap-6"
-        >
+          className="flex flex-col gap-6">
           {numPages &&
             Array.from(new Array(numPages), (_, index) => (
-              <div 
-                key={`page_${index + 1}`} 
+              <div
+                key={`page_${index + 1}`}
                 className="border border-border shadow-md bg-card rounded-xs transition-transform duration-200"
               >
                 <Page
@@ -159,12 +156,9 @@ export default function PdfViewer({ pdfUrl }: PdfViewerProps) {
                   renderTextLayer={true}
                   renderAnnotationLayer={true}
                   loading={
-                    <div 
-                      className="bg-card flex items-center justify-center border border-border/40"
-                      style={{ 
-                        width: 612 * scale, 
-                        height: 792 * scale 
-                      }}
+                    <div
+                      className="bg-card flex items-center justify-center border border-border/40 "
+                      style={{ width: 612 * scale, height: 792 * scale }}
                     >
                       <span className="text-sm text-muted-foreground">Loading Page {index + 1}...</span>
                     </div>

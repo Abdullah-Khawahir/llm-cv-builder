@@ -39,6 +39,11 @@ public sealed class ChatSessionController(IChatSessionService sessions) : Contro
 
     [HttpPost("{id:guid}/stream")]
     [Produces("text/event-stream")]
+    [ProducesResponseType(typeof(Token), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(SessionUpdate), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(Completed), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(Thinking), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(Error), StatusCodes.Status500InternalServerError)]
     public async Task StreamAsync(
         Guid id,
         [FromBody] ChatPromptRequest request,
@@ -57,5 +62,6 @@ public sealed class ChatSessionController(IChatSessionService sessions) : Contro
 
             await Response.Body.FlushAsync(cancellationToken);
         }
+
     }
 }

@@ -22,18 +22,12 @@ public interface IChatSessionService
 }
 
 
-public sealed class ChatSessionService : IChatSessionService
+public sealed class ChatSessionService(
+    ApplicationDbContext db,
+    ILogger<ChatSessionService> log) : IChatSessionService
 {
-    private readonly ApplicationDbContext _db;
-    private readonly ILogger<ChatSessionService> _log;
-
-    public ChatSessionService(
-        ApplicationDbContext db,
-        ILogger<ChatSessionService> log)
-    {
-        _db = db;
-        _log = log;
-    }
+    private readonly ApplicationDbContext _db = db;
+    private readonly ILogger<ChatSessionService> _log = log;
 
     public async Task<ChatSessionDto?> GetByIdAsync(Guid id)
     {
@@ -85,28 +79,23 @@ public sealed class ChatSessionService : IChatSessionService
         await _db.SaveChangesAsync();
     }
 
-
     public async IAsyncEnumerable<ChatStreamEvent> StreamAsync(
         Guid sessionId,
         string prompt,
         [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
         var session = await GetEntityAsync(sessionId);
-
         if (session is null)
         {
-            yield return ChatStreamEvent.Error("Session not found.");
+            yield return ChatStreamEvent.CreateErrorEvent("Session not found.");
             yield break;
         }
 
         var history = session.ChatHistory;
-
         EnsureSystemPrompt(history);
-
         history.AddUserMessage(prompt);
 
         var kernel = CreateKernel(sessionId);
-
         var chatService = kernel.GetRequiredService<IChatCompletionService>();
 
         var settings = new OpenAIPromptExecutionSettings
@@ -114,39 +103,96 @@ public sealed class ChatSessionService : IChatSessionService
             FunctionChoiceBehavior = FunctionChoiceBehavior.Auto()
         };
 
-        var assistantMessage = new StringBuilder();
+        yield return ChatStreamEvent.CreateThinkingEvent();
 
-        yield return ChatStreamEvent.Status("thinking");
+        IAsyncEnumerable<StreamingChatMessageContent>? chunks = null;
+        Exception? setupError = null;
 
-        await foreach (var chunk in chatService.GetStreamingChatMessageContentsAsync(
-            history,
-            settings,
-            kernel,
-            cancellationToken))
+        // 1. Catch initialization errors (No yield inside this try-catch)
+        try
         {
-            if (string.IsNullOrWhiteSpace(chunk.Content))
-            {
-                continue;
-            }
-
-            assistantMessage.Append(chunk.Content);
-
-            yield return ChatStreamEvent.Token(chunk.Content);
+            chunks = chatService.GetStreamingChatMessageContentsAsync(history, settings, kernel, cancellationToken);
+        }
+        catch (Exception ex)
+        {
+            setupError = ex;
         }
 
-        history.AddAssistantMessage(assistantMessage.ToString());
+        if (setupError != null)
+        {
+            yield return ChatStreamEvent.CreateErrorEvent($"Failed to initialize stream: {setupError.Message}");
+            yield break;
+        }
 
+        if (chunks is null)
+        {
+            yield return ChatStreamEvent.CreateErrorEvent($"failed to initialize service provider streams");
+            yield break;
+        }
+
+        // 2. Manual enumeration to safely catch streaming errors
+        var enumerator = chunks.GetAsyncEnumerator(cancellationToken);
+        var assistantMessage = new StringBuilder();
+        Exception? streamError = null;
+
+        try // Outer try-finally is ALLOWED to contain yield return
+        {
+            while (true)
+            {
+                bool hasMore;
+                try // Inner try-catch has NO yield return, so it is ALLOWED
+                {
+                    hasMore = await enumerator.MoveNextAsync();
+                }
+                catch (Exception ex)
+                {
+                    streamError = ex;
+                    break; // Safely exit the loop
+                }
+
+                if (!hasMore) break;
+
+                var chunk = enumerator.Current;
+                if (string.IsNullOrWhiteSpace(chunk.Content))
+                {
+                    continue;
+                }
+
+                assistantMessage.Append(chunk.Content);
+                yield return ChatStreamEvent.CreateTokenEvent(chunk.Content);
+            }
+        }
+        finally
+        {
+            // Ensures resources are cleaned up even if an error occurs
+            await enumerator.DisposeAsync();
+        }
+
+        // 3. Yield the error event OUTSIDE the try-catch block (Compiler allows this)
+        if (streamError != null)
+        {
+            yield return ChatStreamEvent.CreateErrorEvent($"Failed to get stream from provider: {streamError.Message}");
+            yield break;
+        }
+
+        // 4. Success path
+        history.AddAssistantMessage(assistantMessage.ToString());
         await SaveHistoryAsync(sessionId, history);
 
-        yield return ChatStreamEvent.Completed();
-
-        yield return ChatStreamEvent.UpdatedSession(ChatSessionMapper.ToDTO(session));
+        yield return ChatStreamEvent.CreateCompletedEvent();
+        yield return ChatStreamEvent.CreateSessionUpdateEvent(ChatSessionMapper.ToDTO(session));
     }
 
 
     private Kernel CreateKernel(Guid sessionId)
     {
         var builder = Kernel.CreateBuilder();
+
+        builder.Services.AddLogging(l =>
+        {
+            l.AddSerilog();
+            l.SetMinimumLevel(LogLevel.Trace);
+        });
 
         builder.Plugins.AddFromObject(
             new CVFunctions(this, sessionId));
@@ -165,17 +211,6 @@ public sealed class ChatSessionService : IChatSessionService
             });
 
         return builder.Build();
-    }
-
-    private static ChatHistory DeserializeHistory(string json)
-    {
-        return JsonSerializer.Deserialize<ChatHistory>(
-                   json,
-                   new JsonSerializerOptions
-                   {
-                       AllowOutOfOrderMetadataProperties = true
-                   })
-               ?? new ChatHistory();
     }
 
     private static void EnsureSystemPrompt(ChatHistory history)
@@ -212,18 +247,12 @@ public sealed class ChatSessionService : IChatSessionService
             .ToListAsync();
     }
 
-    public sealed class CVFunctions
+    public sealed class CVFunctions(
+        IChatSessionService sessions,
+        Guid sessionId)
     {
-        private readonly IChatSessionService _sessions;
-        private readonly Guid _sessionId;
-
-        public CVFunctions(
-            IChatSessionService sessions,
-            Guid sessionId)
-        {
-            _sessions = sessions;
-            _sessionId = sessionId;
-        }
+        private readonly IChatSessionService _sessions = sessions;
+        private readonly Guid _sessionId = sessionId;
 
         [KernelFunction("WriteCV")]
         [Description("Writes and saves the generated CV HTML. the written html will be rendered to the user")]

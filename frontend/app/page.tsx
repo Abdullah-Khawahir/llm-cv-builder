@@ -23,7 +23,7 @@ export default function Home() {
   const [mounted, setMounted] = useState(false);
 
   const messages = session?.chatHistory?.messages ?? [];
-
+  console.log(messages)
   // Smooth scroll configuration targeting the conversation thread boundary
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -33,7 +33,7 @@ export default function Home() {
     setMounted(true);
   }, []);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = (e: React.SubmitEvent) => {
     e.preventDefault();
     if (!inputPrompt.trim() || promptMutation.isPending) return;
 
@@ -46,7 +46,7 @@ export default function Home() {
   const pdfUrl = `${API_BASE}/api/cv/preview/${sessionId}?v=${shortHash}`;
 
   return (
-    <main className="flex h-screen w-screen overflow-hidden bg-background text-foreground font-sans-preview">
+    <main className="flex h-screen w-screen overflow-hidden bg-background text-foreground font-sans-preview ">
 
       {/* LEFT COMPARTMENT: COMPILATION & PDF ENGINE PREVIEW */}
       <section className="relative w-1/2 h-full px-2 flex flex-col justify-between border-r border-border">
@@ -69,7 +69,7 @@ export default function Home() {
       </section>
 
       {/* RIGHT COMPARTMENT: ORCHESTRATION & CHAT WORKSPACE */}
-      <section className="w-1/2 h-full flex flex-col bg-card">
+      <section className="w-1/2 h-full flex flex-col bg-card ">
 
 
         {/* INTERACTIVE MESSAGE PIPELINE */}
