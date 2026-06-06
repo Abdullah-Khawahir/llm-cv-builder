@@ -2,35 +2,20 @@ using System.Runtime.CompilerServices;
 
 namespace WebAPI.Services;
 
-public interface IChatSessionService
-{
-    Task<ChatSessionDto?> GetByIdAsync(Guid id);
-    Task<ChatSessionDto> CreateAsync();
-    Task<ChatSession?> GetEntityAsync(Guid id);
-
-    Task UpdateHtmlAsync(Guid id, string html);
-
-    Task SaveHistoryAsync(Guid id, ChatHistory history);
-
-
-    IAsyncEnumerable<ChatStreamEvent> StreamAsync(
-        Guid sessionId,
-        string prompt,
-        CancellationToken cancellationToken = default);
-
-    Task<IEnumerable<ChatSessionDto>> GetAllAsync();
-}
-
 
 public sealed class ChatSessionService(
     ApplicationDbContext db,
-    ILogger<ChatSessionService> log) : IChatSessionService
+    ILogger<ChatSessionService> log,
+    ILoggerFactory loggerFactory
+    ) : IChatSessionService
 {
     private readonly ApplicationDbContext _db = db;
     private readonly ILogger<ChatSessionService> _log = log;
+    private readonly ILoggerFactory _loggerFactory = loggerFactory;
 
     public async Task<ChatSessionDto?> GetByIdAsync(Guid id)
     {
+        _log.LogDebug("Fetching chat session DTO for {SessionId}", id);
         return await _db.ChatSessions
             .AsNoTracking()
             .Where(x => x.Id == id)
@@ -40,32 +25,38 @@ public sealed class ChatSessionService(
 
     public async Task<ChatSession?> GetEntityAsync(Guid id)
     {
+        _log.LogDebug("Fetching chat session entity for {SessionId}", id);
         return await _db.ChatSessions
             .FirstOrDefaultAsync(x => x.Id == id);
     }
 
     public async Task<ChatSessionDto> CreateAsync()
     {
+        _log.LogInformation("Creating a new chat session");
         var session = new ChatSession(Guid.NewGuid(), string.Empty, JsonSerializer.Serialize(new ChatHistory()), default);
 
         _db.ChatSessions.Add(session);
 
         await _db.SaveChangesAsync();
 
+        _log.LogInformation("Created chat session {SessionId}", session.Id);
         return ChatSessionMapper.ToDTO(session);
     }
 
     public async Task UpdateHtmlAsync(Guid id, string html)
     {
+        _log.LogInformation("Updating HTML for session {SessionId}", id);
         var session = await GetEntityAsync(id) ?? throw new InvalidOperationException("Session not found.");
 
         _db.Entry(session).CurrentValues.SetValues(session with { HtmlDocument = html });
 
         await _db.SaveChangesAsync();
+        _log.LogDebug("Successfully updated HTML for session {SessionId}", id);
     }
 
     public async Task SaveHistoryAsync(Guid id, ChatHistory history)
     {
+        _log.LogInformation("Saving chat history for session {SessionId}", id);
         var session = await GetEntityAsync(id) ?? throw new InvalidOperationException("Session not found."); ;
 
         _db.Entry(session)
@@ -77,6 +68,7 @@ public sealed class ChatSessionService(
                 });
 
         await _db.SaveChangesAsync();
+        _log.LogDebug("Successfully saved history for session {SessionId}", id);
     }
 
     public async IAsyncEnumerable<ChatStreamEvent> StreamAsync(
@@ -84,9 +76,11 @@ public sealed class ChatSessionService(
         string prompt,
         [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
+        _log.LogInformation("Initializing stream for session {SessionId}", sessionId);
         var session = await GetEntityAsync(sessionId);
         if (session is null)
         {
+            _log.LogWarning("Stream failed: Session {SessionId} not found", sessionId);
             yield return ChatStreamEvent.CreateErrorEvent("Session not found.");
             yield break;
         }
@@ -95,6 +89,7 @@ public sealed class ChatSessionService(
         EnsureSystemPrompt(history);
         history.AddUserMessage(prompt);
 
+        _log.LogDebug("Creating kernel for session {SessionId}", sessionId);
         var kernel = CreateKernel(sessionId);
         var chatService = kernel.GetRequiredService<IChatCompletionService>();
 
@@ -111,10 +106,12 @@ public sealed class ChatSessionService(
         // 1. Catch initialization errors (No yield inside this try-catch)
         try
         {
+            _log.LogDebug("Requesting streaming contents from provider for session {SessionId}", sessionId);
             chunks = chatService.GetStreamingChatMessageContentsAsync(history, settings, kernel, cancellationToken);
         }
         catch (Exception ex)
         {
+            _log.LogError(ex, "Failed to initialize stream for session {SessionId}", sessionId);
             setupError = ex;
         }
 
@@ -126,6 +123,7 @@ public sealed class ChatSessionService(
 
         if (chunks is null)
         {
+            _log.LogError("Stream chunks were null for session {SessionId}", sessionId);
             yield return ChatStreamEvent.CreateErrorEvent($"failed to initialize service provider streams");
             yield break;
         }
@@ -146,6 +144,7 @@ public sealed class ChatSessionService(
                 }
                 catch (Exception ex)
                 {
+                    _log.LogError(ex, "Error occurred while enumerating stream for session {SessionId}", sessionId);
                     streamError = ex;
                     break; // Safely exit the loop
                 }
@@ -176,6 +175,7 @@ public sealed class ChatSessionService(
         }
 
         // 4. Success path
+        _log.LogInformation("Stream completed successfully for session {SessionId}. Saving history.", sessionId);
         history.AddAssistantMessage(assistantMessage.ToString());
         await SaveHistoryAsync(sessionId, history);
 
@@ -193,9 +193,9 @@ public sealed class ChatSessionService(
             l.AddSerilog();
             l.SetMinimumLevel(LogLevel.Trace);
         });
-
+        var cvFunctionsLogger = _loggerFactory.CreateLogger<ChatSessionService.CVFunctions>();
         builder.Plugins.AddFromObject(
-            new CVFunctions(this, sessionId));
+            new CVFunctions(this, sessionId, cvFunctionsLogger));
 
         builder.AddOpenAIChatCompletion(
             modelId: "google/gemini-2.5-flash-lite",
@@ -242,23 +242,29 @@ public sealed class ChatSessionService(
 
     public async Task<IEnumerable<ChatSessionDto>> GetAllAsync()
     {
-        return await _db.ChatSessions.AsNoTracking()
+        _log.LogInformation("Fetching all chat sessions");
+        var results = await _db.ChatSessions.AsNoTracking()
             .Select(e => ChatSessionMapper.ToDTO(e))
             .ToListAsync();
+        _log.LogInformation("Successfully retrieved {Count} sessions", results.Count);
+        return results;
     }
 
     public sealed class CVFunctions(
         IChatSessionService sessions,
-        Guid sessionId)
+        Guid sessionId,
+        ILogger<ChatSessionService.CVFunctions> log)
     {
         private readonly IChatSessionService _sessions = sessions;
         private readonly Guid _sessionId = sessionId;
-
+        private readonly ILogger<ChatSessionService.CVFunctions> _log = log;
         [KernelFunction("WriteCV")]
         [Description("Writes and saves the generated CV HTML. the written html will be rendered to the user")]
         public async Task<bool> WriteCVAsync(string html)
         {
+            _log.LogInformation("AI Tool WriteCV invoked for session {SessionId}", _sessionId);
             await _sessions.UpdateHtmlAsync(_sessionId, html);
+            _log.LogInformation("Successfully wrote CV HTML for session {SessionId}", _sessionId);
 
             return true;
         }
@@ -267,9 +273,12 @@ public sealed class ChatSessionService(
         [Description("Returns the current saved CV HTML.")]
         public async Task<string> GetCurrentCVAsync()
         {
+            _log.LogInformation("AI Tool GetCV invoked for session {SessionId}", _sessionId);
             var session = await _sessions.GetByIdAsync(_sessionId);
+            var html = session?.HtmlDocument ?? string.Empty;
+            _log.LogDebug("Retrieved CV HTML for session {SessionId} (Length: {Length})", _sessionId, html.Length);
 
-            return session?.HtmlDocument ?? string.Empty;
+            return html;
         }
     }
 }
