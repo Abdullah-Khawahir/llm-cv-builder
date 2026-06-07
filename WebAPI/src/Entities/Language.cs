@@ -1,6 +1,6 @@
 namespace WebAPI.Entities;
 
-public sealed record Language(
+public sealed record class Language(
     Guid Id,
     Guid UserProfileId,
     string Name,

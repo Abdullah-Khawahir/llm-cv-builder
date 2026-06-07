@@ -1,6 +1,6 @@
 namespace WebAPI.Entities;
 
-public sealed record Project(
+public sealed record class Project(
     Guid Id,
     Guid UserProfileId,
     string Name,

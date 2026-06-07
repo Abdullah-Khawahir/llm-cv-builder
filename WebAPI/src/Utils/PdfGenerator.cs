@@ -24,25 +24,28 @@ public static class PdfGenerator
 
         process.Start();
 
-        await using var input = process.StandardInput.BaseStream;
-        await input.WriteAsync(Encoding.UTF8.GetBytes(html));
-        await input.FlushAsync();
-        process.StandardInput.Close();
-
-        var output = new MemoryStream();
-        var errorTask = process.StandardError.ReadToEndAsync();
-
-        await process.StandardOutput.BaseStream.CopyToAsync(output);
-
-        await process.WaitForExitAsync();
-
-        if (process.ExitCode != 0)
+        var input = process.StandardInput.BaseStream;
+        await using (input.ConfigureAwait(false))
         {
-            var error = await errorTask;
-            throw AppException.PdfGenerationFailed(error);
-        }
+            await input.WriteAsync(Encoding.UTF8.GetBytes(html)).ConfigureAwait(false);
+            await input.FlushAsync().ConfigureAwait(false);
+            process.StandardInput.Close();
 
-        output.Position = 0;
-        return output;
+            var output = new MemoryStream();
+            var errorTask = process.StandardError.ReadToEndAsync();
+
+            await process.StandardOutput.BaseStream.CopyToAsync(output).ConfigureAwait(false);
+
+            await process.WaitForExitAsync().ConfigureAwait(false);
+
+            if (process.ExitCode != 0)
+            {
+                var error = await errorTask.ConfigureAwait(false);
+                throw AppException.PdfGenerationFailed(error);
+            }
+
+            output.Position = 0;
+            return output;
+        }
     }
 }

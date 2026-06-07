@@ -1,7 +1,7 @@
 
 namespace WebAPI.DTOs;
 
-public sealed record UserProfileDto(
+public sealed record class UserProfileDto(
     Guid Id,
     string FullName,
     string Title,

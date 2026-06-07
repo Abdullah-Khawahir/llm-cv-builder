@@ -1,6 +1,6 @@
 namespace WebAPI.Entities;
 
-public sealed record Skill(
+public sealed record class Skill(
     Guid Id,
     Guid UserProfileId,
     string Name,

@@ -1,6 +1,6 @@
 using WebAPI;
 using WebAPI.Exceptions;
-
+namespace WebAPI;
 public sealed class ErrorHandlerMiddleware(RequestDelegate next)
 {
     private readonly RequestDelegate _next = next;
@@ -9,7 +9,7 @@ public sealed class ErrorHandlerMiddleware(RequestDelegate next)
     {
         try
         {
-            await _next(context);
+            await _next(context).ConfigureAwait(false);
         }
         catch (AppException ex)
         {
@@ -22,7 +22,7 @@ public sealed class ErrorHandlerMiddleware(RequestDelegate next)
                 ex.StatusCode,
                 ex.ErrorMessage,
             };
-            await context.Response.WriteAsJsonAsync(response);
+            await context.Response.WriteAsJsonAsync(response).ConfigureAwait(false);
 
         }
 

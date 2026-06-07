@@ -1,3 +1,3 @@
 namespace WebAPI.DTOs;
 
-public sealed record SkillDto(Guid Id, string Name, int Proficiency);
+public sealed record class SkillDto(Guid Id, string Name, int Proficiency);

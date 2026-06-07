@@ -11,9 +11,9 @@ public sealed class ChatSessionController(IChatSessionService sessions, ILogger<
     public async Task<ActionResult<ChatSessionDto[]>> GetAllAsync()
     {
         _logger.LogInformation("Fetching all chat sessions");
-        var sessions = await _sessions.GetAllAsync() ?? [];
-        _logger.LogInformation("Successfully retrieved {Count} sessions", sessions.Count());
-        return Ok(sessions);
+        var allSessions = await _sessions.GetAllAsync() ?? [];
+        _logger.LogInformation("Successfully retrieved {Count} sessions", allSessions.Count());
+        return Ok(allSessions);
     }
 
     [HttpGet("{id:guid}")]
@@ -50,7 +50,7 @@ public sealed class ChatSessionController(IChatSessionService sessions, ILogger<
     [ProducesResponseType(typeof(SessionUpdate), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(Completed), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(Thinking), StatusCodes.Status200OK)]
-    [ProducesResponseType(typeof(Error), StatusCodes.Status500InternalServerError)]
+    [ProducesResponseType(typeof(ErrorEvent), StatusCodes.Status500InternalServerError)]
     public async Task StreamAsync(
         Guid id,
         [FromBody] ChatPromptRequest request,

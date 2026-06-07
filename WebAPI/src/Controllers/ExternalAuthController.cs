@@ -69,7 +69,10 @@ public class ExternalAuthController(
         else
         {
             var userLogins = await _userManager.GetLoginsAsync(user);
-            var isGoogleLinked = userLogins.Any(l => l.LoginProvider == info.LoginProvider && l.ProviderKey == info.ProviderKey);
+            var isGoogleLinked = userLogins.Any(l =>
+                    string.Equals( l.LoginProvider, info.LoginProvider, StringComparison.Ordinal)
+                        && string.Equals(l.ProviderKey, info.ProviderKey, StringComparison.Ordinal)
+                        );
 
             if (!isGoogleLinked)
             {

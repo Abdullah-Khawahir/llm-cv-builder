@@ -1,6 +1,6 @@
 namespace WebAPI.DTOs;
 
-public sealed record WorkExperienceDto(
+public sealed record class WorkExperienceDto(
     Guid Id,
     string Company,
     string Position,

@@ -1,0 +1,150 @@
+services:
+
+  migrate:
+    build:
+      context: ./WebAPI
+      dockerfile: Dockerfile
+    command: ["dotnet", "WebAPI.dll", "migrate"]
+    restart: "no"
+    depends_on:
+      db:
+        condition: service_healthy
+
+    env_file:
+      - ./.env
+
+    networks:
+      - appnet
+
+
+  api:
+    build:
+      context: ./WebAPI
+      dockerfile: Dockerfile
+    container_name: cv-api
+
+    restart: unless-stopped
+
+    ports:
+      - "5044:8080"
+
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+
+      minio-init:
+        condition: service_completed_successfully
+
+    env_file:
+      - ./.env
+
+    networks:
+      - appnet
+
+
+  db:
+    image: postgres:16
+
+    container_name: cv-db
+
+    restart: unless-stopped
+
+    env_file:
+      - ./.env
+
+    ports:
+      - "5432:5432"
+
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d cvdb"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+    networks:
+      - appnet
+
+
+  minio:
+    image: minio/minio
+
+    container_name: cv-minio
+
+    command: server /data --console-address ":9001"
+
+    restart: unless-stopped
+
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+
+    env_file:
+      - ./.env
+
+    volumes:
+      - miniodata:/data
+
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "curl",
+          "-f",
+          "http://localhost:9000/minio/health/live"
+        ]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+    networks:
+      - appnet
+
+  minio-init:
+    image: minio/mc
+    restart: "no"
+    depends_on:
+      minio:
+        condition: service_healthy
+
+    environment:
+      MINIO_HOST: ${MINIO_HOST}
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD}
+    entrypoint:
+      - /bin/sh
+      - -c
+      - |
+        until mc alias set local http://${MINIO_HOST}:9000 ${MINIO_ROOT_USER} ${MINIO_ROOT_PASSWORD}
+        do
+          sleep 2
+        done
+        mc mb -p local/pdfs || true
+        mc anonymous set download local/pdfs || true
+
+    networks:
+      - appnet
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: frontend
+    ports:
+      - "3000:3000"
+    env_file:
+      - ./.env
+    depends_on:
+      - api
+    networks:
+      - appnet
+
+volumes:
+  pgdata:
+  miniodata:
+
+
+networks:
+  appnet:

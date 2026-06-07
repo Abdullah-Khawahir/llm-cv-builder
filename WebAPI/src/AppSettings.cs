@@ -12,13 +12,13 @@ public sealed class AppSettings
     public Google Google { get; set; } = default!;
 }
 
-public sealed record ConnectionStrings(string DefaultConnection);
+public sealed record class ConnectionStrings(string DefaultConnection);
 
-public sealed record Google(
+public sealed record class Google(
         string ClientId,
         string ClientSecret
         );
-public sealed record Jwt(
+public sealed record class Jwt(
     [property: MinLength(32)] string Key,
     string Audience,
     string Issuer

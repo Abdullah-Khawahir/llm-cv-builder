@@ -1,6 +1,7 @@
 using Microsoft.Extensions.Options;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Identity;
+namespace WebAPI.Controllers;
 
 [ApiController]
 [Route("/api/auth")]
@@ -11,7 +12,7 @@ public sealed class AuthController(
         ) : ControllerBase
 {
     private UserManager<User> _userManager { get; } = userManager;
-    public AppSettings _appSettings { get; } = appSettings.Value;
+    private AppSettings _appSettings { get; } = appSettings.Value;
     private readonly ILogger<AuthController> _logger = logger;
 
     [HttpPost("register")]
@@ -69,6 +70,6 @@ public sealed class AuthController(
     }
 }
 
-public sealed record JwtTokenResponse(string Token);
-public sealed record UserLoginModel(string Email, string Password);
-public sealed record UserRegisterModel(string Email, string Password);
+public sealed record class JwtTokenResponse(string Token);
+public sealed record class UserLoginModel(string Email, string Password);
+public sealed record class UserRegisterModel(string Email, string Password);

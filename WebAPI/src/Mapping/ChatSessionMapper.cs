@@ -6,9 +6,7 @@ public static class ChatSessionMapper
     {
         var messages = session.ChatHistory
             .Skip(1)
-            .Where(m => !string.IsNullOrWhiteSpace(m.Content))
-            .Where(m => m.Role.Label.ToLower() == "user" || m.Role.Label.ToLower() == "assistant")
-            .Select(m => new ChatMessageDto(
+            .Where(m => !string.IsNullOrWhiteSpace(m.Content) && (m.Role.Label.Equals("user", StringComparison.Ordinal) || m.Role.Label.Equals("assistant", StringComparison.Ordinal))).Select(m => new ChatMessageDto(
                 m.Role.Label,
                 m.Content ?? string.Empty
             ))

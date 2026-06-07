@@ -1,6 +1,6 @@
 namespace WebAPI.Entities;
 
-public sealed record WorkExperience(
+public sealed record class WorkExperience(
     Guid Id,
     Guid UserProfileId,
     string Company,

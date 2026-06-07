@@ -1,6 +1,6 @@
 namespace WebAPI.Entities;
 
-public sealed record Award(
+public sealed record class Award(
     Guid Id,
     string Title,
     DateTime DateAwarded,

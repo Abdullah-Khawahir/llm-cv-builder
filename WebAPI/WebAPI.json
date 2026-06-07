@@ -280,7 +280,7 @@
             "content": {
               "text/event-stream": {
                 "schema": {
-                  "$ref": "#/components/schemas/Error"
+                  "$ref": "#/components/schemas/ErrorEvent"
                 }
               }
             }
@@ -374,7 +374,7 @@
         },
         "additionalProperties": false
       },
-      "Error": {
+      "ErrorEvent": {
         "type": "object",
         "properties": {
           "message": {

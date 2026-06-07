@@ -1,6 +1,6 @@
 namespace WebAPI.Entities;
 
-public sealed record Education(
+public sealed record class Education(
     Guid Id,
     Guid UserProfileId,
     string Institution,

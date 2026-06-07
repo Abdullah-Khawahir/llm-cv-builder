@@ -1,6 +1,6 @@
 namespace WebAPI.Entities;
 
-public sealed record Certificate(
+public sealed record class Certificate(
     Guid Id,
     Guid UserProfileId,
     string Title,

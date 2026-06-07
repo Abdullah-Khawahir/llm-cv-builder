@@ -1,6 +1,6 @@
 namespace WebAPI.DTOs;
 
-public sealed record CertificateDto(
+public sealed record class CertificateDto(
     Guid Id,
     string Title,
     string Issuer,

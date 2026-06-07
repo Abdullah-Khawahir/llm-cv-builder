@@ -1,7 +1,7 @@
 namespace WebAPI.Entities;
 
 
-public sealed record UserProfile(
+public sealed record class UserProfile(
     Guid Id,
     Guid UserId,
     string FullName,

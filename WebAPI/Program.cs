@@ -146,7 +146,7 @@ builder.Services.AddAuthentication(options =>
     options.ClientId = appSettings.Google.ClientId;
     options.ClientSecret = appSettings.Google.ClientSecret;
     options.SignInScheme = IdentityConstants.ExternalScheme;
-}); ;
+});
 
 builder.Services.AddControllers();
 
@@ -171,4 +171,4 @@ app.MapOpenApi("/openapi/{documentName}.yaml");
 app.UseRouting();
 app.MapControllers();
 
-await app.RunAsync();
+await app.RunAsync().ConfigureAwait(false);

@@ -2,7 +2,7 @@ using System.ComponentModel.DataAnnotations.Schema;
 
 namespace WebAPI.Entities;
 
-public sealed record ChatSession(
+public sealed record class ChatSession(
     Guid Id,
     string HtmlDocument,
     [property: Column(TypeName = "jsonb")] string ChatHistoryJson,
@@ -14,10 +14,8 @@ public sealed record ChatSession(
     {
         get => JsonSerializer.Deserialize<ChatHistory>(
                 ChatHistoryJson,
-                options: new JsonSerializerOptions
-                {
-                    AllowOutOfOrderMetadataProperties = true,
-                }
+                options: s_jsonSerializerOptions
                 ) ?? new ChatHistory();
     }
+    private static readonly JsonSerializerOptions s_jsonSerializerOptions = new() { AllowOutOfOrderMetadataProperties = true };
 }

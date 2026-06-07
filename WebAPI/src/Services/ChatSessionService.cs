@@ -20,14 +20,14 @@ public sealed class ChatSessionService(
             .AsNoTracking()
             .Where(x => x.Id == id)
             .Select(x => ChatSessionMapper.ToDTO(x))
-            .FirstOrDefaultAsync();
+            .FirstOrDefaultAsync().ConfigureAwait(false);
     }
 
     public async Task<ChatSession?> GetEntityAsync(Guid id)
     {
         _log.LogDebug("Fetching chat session entity for {SessionId}", id);
         return await _db.ChatSessions
-            .FirstOrDefaultAsync(x => x.Id == id);
+            .FirstOrDefaultAsync(x => x.Id == id).ConfigureAwait(false);
     }
 
     public async Task<ChatSessionDto> CreateAsync()
@@ -37,7 +37,7 @@ public sealed class ChatSessionService(
 
         _db.ChatSessions.Add(session);
 
-        await _db.SaveChangesAsync();
+        await _db.SaveChangesAsync().ConfigureAwait(false);
 
         _log.LogInformation("Created chat session {SessionId}", session.Id);
         return ChatSessionMapper.ToDTO(session);
@@ -46,18 +46,18 @@ public sealed class ChatSessionService(
     public async Task UpdateHtmlAsync(Guid id, string html)
     {
         _log.LogInformation("Updating HTML for session {SessionId}", id);
-        var session = await GetEntityAsync(id) ?? throw new InvalidOperationException("Session not found.");
+        var session = await GetEntityAsync(id).ConfigureAwait(false) ?? throw new InvalidOperationException("Session not found.");
 
         _db.Entry(session).CurrentValues.SetValues(session with { HtmlDocument = html });
 
-        await _db.SaveChangesAsync();
+        await _db.SaveChangesAsync().ConfigureAwait(false);
         _log.LogDebug("Successfully updated HTML for session {SessionId}", id);
     }
 
     public async Task SaveHistoryAsync(Guid id, ChatHistory history)
     {
         _log.LogInformation("Saving chat history for session {SessionId}", id);
-        var session = await GetEntityAsync(id) ?? throw new InvalidOperationException("Session not found."); ;
+        var session = await GetEntityAsync(id).ConfigureAwait(false) ?? throw new InvalidOperationException("Session not found.");
 
         _db.Entry(session)
             .CurrentValues
@@ -67,7 +67,7 @@ public sealed class ChatSessionService(
                     ChatHistoryJson = JsonSerializer.Serialize(history)
                 });
 
-        await _db.SaveChangesAsync();
+        await _db.SaveChangesAsync().ConfigureAwait(false);
         _log.LogDebug("Successfully saved history for session {SessionId}", id);
     }
 
@@ -77,7 +77,7 @@ public sealed class ChatSessionService(
         [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
         _log.LogInformation("Initializing stream for session {SessionId}", sessionId);
-        var session = await GetEntityAsync(sessionId);
+        var session = await GetEntityAsync(sessionId).ConfigureAwait(false);
         if (session is null)
         {
             _log.LogWarning("Stream failed: Session {SessionId} not found", sessionId);
@@ -140,7 +140,7 @@ public sealed class ChatSessionService(
                 bool hasMore;
                 try // Inner try-catch has NO yield return, so it is ALLOWED
                 {
-                    hasMore = await enumerator.MoveNextAsync();
+                    hasMore = await enumerator.MoveNextAsync().ConfigureAwait(false);
                 }
                 catch (Exception ex)
                 {
@@ -164,7 +164,7 @@ public sealed class ChatSessionService(
         finally
         {
             // Ensures resources are cleaned up even if an error occurs
-            await enumerator.DisposeAsync();
+            await enumerator.DisposeAsync().ConfigureAwait(false);
         }
 
         // 3. Yield the error event OUTSIDE the try-catch block (Compiler allows this)
@@ -177,7 +177,7 @@ public sealed class ChatSessionService(
         // 4. Success path
         _log.LogInformation("Stream completed successfully for session {SessionId}. Saving history.", sessionId);
         history.AddAssistantMessage(assistantMessage.ToString());
-        await SaveHistoryAsync(sessionId, history);
+        await SaveHistoryAsync(sessionId, history).ConfigureAwait(false);
 
         yield return ChatStreamEvent.CreateCompletedEvent();
         yield return ChatStreamEvent.CreateSessionUpdateEvent(ChatSessionMapper.ToDTO(session));
@@ -245,7 +245,7 @@ public sealed class ChatSessionService(
         _log.LogInformation("Fetching all chat sessions");
         var results = await _db.ChatSessions.AsNoTracking()
             .Select(e => ChatSessionMapper.ToDTO(e))
-            .ToListAsync();
+            .ToListAsync().ConfigureAwait(false);
         _log.LogInformation("Successfully retrieved {Count} sessions", results.Count);
         return results;
     }
@@ -263,7 +263,7 @@ public sealed class ChatSessionService(
         public async Task<bool> WriteCVAsync(string html)
         {
             _log.LogInformation("AI Tool WriteCV invoked for session {SessionId}", _sessionId);
-            await _sessions.UpdateHtmlAsync(_sessionId, html);
+            await _sessions.UpdateHtmlAsync(_sessionId, html).ConfigureAwait(false);
             _log.LogInformation("Successfully wrote CV HTML for session {SessionId}", _sessionId);
 
             return true;
@@ -274,7 +274,7 @@ public sealed class ChatSessionService(
         public async Task<string> GetCurrentCVAsync()
         {
             _log.LogInformation("AI Tool GetCV invoked for session {SessionId}", _sessionId);
-            var session = await _sessions.GetByIdAsync(_sessionId);
+            var session = await _sessions.GetByIdAsync(_sessionId).ConfigureAwait(false);
             var html = session?.HtmlDocument ?? string.Empty;
             _log.LogDebug("Retrieved CV HTML for session {SessionId} (Length: {Length})", _sessionId, html.Length);
 
