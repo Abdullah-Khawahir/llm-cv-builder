@@ -23,17 +23,28 @@ export interface ChatPromptRequest {
   prompt?: string | null;
 }
 
-export interface ChatSessionDto {
+export interface ChatSessionDetailsDto {
   /** @format uuid */
   id?: string;
+  title?: string | null;
   htmlDocument?: string | null;
   chatHistory?: ChatHistoryDto;
   /** @format int32 */
   version?: number | null;
 }
 
-export interface Error {
+export interface ChatSessionListItemDto {
+  /** @format uuid */
+  id?: string;
+  title?: string | null;
+}
+
+export interface ErrorEvent {
   message?: string | null;
+}
+
+export interface JwtTokenResponse {
+  token?: string | null;
 }
 
 export interface Thinking {
@@ -263,7 +274,7 @@ export class Api<
      * @request POST:/api/auth/login
      */
     authLoginCreate: (data: UserLoginModel, params: RequestParams = {}) =>
-      this.request<UserDto, any>({
+      this.request<JwtTokenResponse, any>({
         path: `/api/auth/login`,
         method: "POST",
         body: data,
@@ -294,7 +305,7 @@ export class Api<
      * @request GET:/api/chat-sessions
      */
     chatSessionsList: (params: RequestParams = {}) =>
-      this.request<ChatSessionDto[], any>({
+      this.request<ChatSessionListItemDto[], any>({
         path: `/api/chat-sessions`,
         method: "GET",
         format: "json",
@@ -309,7 +320,7 @@ export class Api<
      * @request POST:/api/chat-sessions
      */
     chatSessionsCreate: (params: RequestParams = {}) =>
-      this.request<ChatSessionDto, any>({
+      this.request<ChatSessionDetailsDto, any>({
         path: `/api/chat-sessions`,
         method: "POST",
         format: "json",
@@ -324,7 +335,7 @@ export class Api<
      * @request GET:/api/chat-sessions/{id}
      */
     chatSessionsDetail: (id: string, params: RequestParams = {}) =>
-      this.request<ChatSessionDto, any>({
+      this.request<ChatSessionDetailsDto, any>({
         path: `/api/chat-sessions/${id}`,
         method: "GET",
         format: "json",
@@ -343,7 +354,7 @@ export class Api<
       data: ChatPromptRequest,
       params: RequestParams = {},
     ) =>
-      this.request<Thinking, Error>({
+      this.request<Thinking, ErrorEvent>({
         path: `/api/chat-sessions/${id}/stream`,
         method: "POST",
         body: data,

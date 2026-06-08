@@ -1,12 +1,12 @@
 namespace WebAPI.Entities;
 
-public sealed record class Skill(
-    Guid Id,
-    Guid UserProfileId,
-    string Name,
-    int Proficiency
-    )
+public sealed class Skill : AuditableEntity
 {
-    public UserProfile UserProfile { get; init; } = default!;
 
+    public Guid Id { get; set; }
+    public Guid UserProfileId { get; set; }
+    public string Name { get; set; } = default!;
+    public int Proficiency { get; set; }
+
+    public UserProfile UserProfile { get; init; } = default!;
 };

@@ -1,11 +1,13 @@
 namespace WebAPI.Services;
 
 public sealed class CVFunctions(
-    IChatSessionService sessions,
+    IChatSessionCommandService command,
+    IChatSessionQueryService query,
     Guid sessionId,
     ILogger<CVFunctions> log)
 {
-    private readonly IChatSessionService _sessions = sessions;
+    private readonly IChatSessionCommandService _command = command;
+    private readonly IChatSessionQueryService _query = query;
     private readonly Guid _sessionId = sessionId;
     private readonly ILogger<CVFunctions> _log = log;
 
@@ -15,7 +17,7 @@ public sealed class CVFunctions(
     {
         _log.LogInformation("WriteCV invoked for {SessionId}", _sessionId);
 
-        await _sessions.UpdateHtmlAsync(_sessionId, html).ConfigureAwait(false);
+        await _command.UpdateHtmlAsync(_sessionId, html).ConfigureAwait(false);
 
         return true;
     }
@@ -26,7 +28,23 @@ public sealed class CVFunctions(
     {
         _log.LogInformation("GetCV invoked for {SessionId}", _sessionId);
 
-        var session = await _sessions.GetByIdAsync(_sessionId).ConfigureAwait(false);
+        var session = await _query.GetByIdAsync(_sessionId).ConfigureAwait(false);
         return session?.HtmlDocument ?? string.Empty;
+    }
+
+
+    [KernelFunction("SetSessionTitle")]
+    [Description("functions sets the session tite. this title is shown to the user")]
+    public async Task<bool> SetSessionTitle(string newTitle)
+    {
+        try
+        {
+            await _command.UpdateTitleAsync(_sessionId, newTitle).ConfigureAwait(false);
+            return true;
+        }
+        catch
+        {
+            return false;
+        }
     }
 }

@@ -2,25 +2,33 @@ namespace WebAPI.Controllers;
 
 [ApiController]
 [Route("api/chat-sessions")]
-public sealed class ChatSessionController(IChatSessionService sessions, ILogger<ChatSessionController> logger) : ControllerBase
+public sealed class ChatSessionController(
+        IChatSessionQueryService queries,
+        IChatSessionCommandService commands,
+        IChatStreamingService streaming,
+        ILogger<ChatSessionController> logger
+        ) : ControllerBase
 {
-    private readonly IChatSessionService _sessions = sessions;
+    private readonly IChatSessionQueryService _queries = queries;
+    private readonly IChatSessionCommandService _commands = commands;
+    private readonly IChatStreamingService _streaming = streaming;
     private readonly ILogger<ChatSessionController> _logger = logger;
 
+
     [HttpGet]
-    public async Task<ActionResult<ChatSessionDto[]>> GetAllAsync()
+    public async Task<ActionResult<ChatSessionListItemDto[]>> GetAllAsync()
     {
         _logger.LogInformation("Fetching all chat sessions");
-        var allSessions = await _sessions.GetAllAsync() ?? [];
+        var allSessions = await _queries.GetAllAsync() ?? [];
         _logger.LogInformation("Successfully retrieved {Count} sessions", allSessions.Count());
         return Ok(allSessions);
     }
 
     [HttpGet("{id:guid}")]
-    public async Task<ActionResult<ChatSessionDto>> GetById(Guid id)
+    public async Task<ActionResult<ChatSessionDetailsDto>> GetById(Guid id)
     {
         _logger.LogInformation("Fetching chat session {SessionId}", id);
-        var session = await _sessions.GetByIdAsync(id);
+        var session = await _queries.GetByIdAsync(id);
 
         if (session is null)
         {
@@ -32,10 +40,10 @@ public sealed class ChatSessionController(IChatSessionService sessions, ILogger<
     }
 
     [HttpPost]
-    public async Task<ActionResult<ChatSessionDto>> CreateAsync()
+    public async Task<ActionResult<ChatSessionDetailsDto>> CreateAsync()
     {
         _logger.LogInformation("Creating new chat session");
-        var session = await _sessions.CreateAsync();
+        var session = await _commands.CreateAsync();
         _logger.LogInformation("Created chat session {SessionId}", session.Id);
 
         return CreatedAtAction(
@@ -64,7 +72,7 @@ public sealed class ChatSessionController(IChatSessionService sessions, ILogger<
 
         try
         {
-            await foreach (var evt in _sessions.StreamAsync(id, request.Prompt, cancellationToken))
+            await foreach (var evt in _streaming.StreamAsync(id, request.Prompt, cancellationToken))
             {
                 var json = JsonSerializer.Serialize(evt);
                 await Response.WriteAsync($"data: {json}\n\n", cancellationToken);

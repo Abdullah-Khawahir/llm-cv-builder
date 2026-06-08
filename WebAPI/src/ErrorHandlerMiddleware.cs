@@ -1,6 +1,7 @@
 using WebAPI;
 using WebAPI.Exceptions;
 namespace WebAPI;
+
 public sealed class ErrorHandlerMiddleware(RequestDelegate next)
 {
     private readonly RequestDelegate _next = next;

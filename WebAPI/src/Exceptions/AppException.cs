@@ -30,6 +30,8 @@ public sealed class AppException(string errorMessage, int statusCode, Exception?
     public static AppException PdfGenerationFailed(string message = "Failed to generate PDF", Exception? innerException = default) =>
         new(message, StatusCodes.Status500InternalServerError, innerException);
 
+    public static AppException NoContentToGenerate(string message = "No content to generate", Exception? innerException = default) =>
+        new(message, StatusCodes.Status204NoContent, innerException);
     public static AppException Internal(string message = "Internal server error", Exception? innerException = default) =>
         new(message, StatusCodes.Status500InternalServerError, innerException);
 

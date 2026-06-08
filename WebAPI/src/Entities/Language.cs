@@ -1,12 +1,13 @@
 namespace WebAPI.Entities;
 
-public sealed record class Language(
-    Guid Id,
-    Guid UserProfileId,
-    string Name,
-    string Proficiency,
-    int Order
-    )
+public sealed class Language
 {
+
+    public Guid Id { get; set; }
+    public Guid UserProfileId { get; set; }
+    public string Name { get; set; } = default!;
+    public string Proficiency { get; set; } = default!;
+    public int Order { get; set; }
+
     public UserProfile UserProfile { get; init; } = default!;
 };

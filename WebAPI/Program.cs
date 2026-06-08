@@ -88,8 +88,13 @@ builder.Services.AddIdentity<User, IdentityRole<Guid>>(options =>
 
 
 builder.Services.AddControllers();
-builder.Services.AddScoped<IChatSessionService, ChatSessionService>();
+// builder.Services.AddScoped<IChatSessionService, ChatSessionService>();
 builder.Services.AddOpenApi();
+
+builder.Services.AddScoped<IChatSessionQueryService, ChatSessionQueryService>();
+builder.Services.AddScoped<IChatSessionCommandService, ChatSessionCommandService>();
+builder.Services.AddScoped<IChatStreamingService, ChatStreamingService>();
+builder.Services.AddScoped<IKernelFactory, KernelFactory>();
 
 builder.Services.AddScoped<UserRepository>();
 builder.Services.AddScoped<AwardRepository>();

@@ -1,5 +1,6 @@
-"use client"
+"use client";
 
+import { api } from "@/app/ApiClient";
 import {
   Sidebar,
   SidebarContent,
@@ -9,46 +10,68 @@ import {
   SidebarMenu,
   SidebarMenuItem,
   SidebarMenuButton,
-  useSidebar,
   SidebarTrigger,
+  useSidebar,
 } from "@/components/ui/sidebar";
 
+import { useQuery } from "@tanstack/react-query";
+import Link from "next/link";
 import { User2, Plus, Search } from "lucide-react";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { useState } from "react";
 
 export function AppSidebar() {
   const { state } = useSidebar();
   const collapsed = state === "collapsed";
+  const [searchFilter, setSearchFilter] = useState("")
+  const sessions = useSessions();
+  const searchParams = useSearchParams();
+  const pathname = usePathname();
+  const router = useRouter();
+
+  const updateParams = (updates: Record<string, string | null>) => {
+    const params = new URLSearchParams(searchParams.toString());
+
+    Object.entries(updates).forEach(([key, value]) => {
+      if (!value) params.delete(key);
+      else params.set(key, value);
+    });
+
+    router.push(`${pathname}?${params.toString()}`);
+  };
+
+  const handleNewChat = () => {
+    updateParams({ sid: null });
+  };
+
 
   return (
     <Sidebar side="left" variant="sidebar" className="h-full border-none">
 
       {/* HEADER */}
-      <SidebarHeader className="p-2 space-y-2">
-
-        {/* Trigger (better UX: inside header) */}
+      <SidebarHeader className="p-2 space-y-3">
         <div className="flex items-center justify-between">
           {!collapsed && (
             <span className="text-sm font-semibold">Chats</span>
           )}
-
-          <SidebarTrigger className="h-8 w-8 rounded-md hover:bg-muted transition" />
+          <SidebarTrigger className="h-8 w-8 rounded-md hover:bg-muted" />
         </div>
 
-        {/* New Chat */}
         <SidebarMenu>
           <SidebarMenuItem>
-            <SidebarMenuButton className="w-full justify-start gap-2">
+            <SidebarMenuButton onClick={handleNewChat}>
               <Plus size={16} />
               {!collapsed && "New Chat"}
             </SidebarMenuButton>
           </SidebarMenuItem>
         </SidebarMenu>
 
-        {/* Search */}
         {!collapsed && (
           <div className="relative">
             <Search size={14} className="absolute left-2 top-2 text-muted-foreground" />
             <input
+              value={searchFilter}
+              onChange={(e) => setSearchFilter(e.currentTarget.value)}
               className="w-full rounded-md border pl-7 pr-2 py-1 text-sm"
               placeholder="Search chats..."
             />
@@ -66,19 +89,21 @@ export function AppSidebar() {
           )}
 
           <SidebarMenu>
-            {[
-              "React Query Guide",
-              "ASP.NET Identity Flow",
-              "Tailwind Sidebar UX",
-              "Markdown Fix",
-            ].map((chat) => (
-              <SidebarMenuItem key={chat}>
-                <SidebarMenuButton>
-                  {!collapsed && chat}
-                  {collapsed && "•"}
-                </SidebarMenuButton>
-              </SidebarMenuItem>
-            ))}
+            {sessions.data
+              ?.filter(s => s.title?.toLowerCase().includes(searchFilter.toLowerCase()))
+              .map((session) => (
+                <SidebarMenuItem key={session.id}>
+                  <SidebarMenuButton
+                    asChild
+                    className="h-fit text-sm"
+                    isActive={searchParams.get("sid") === session.id}
+                  >
+                    <Link href={`/?sid=${session.id}`}>
+                      {!collapsed && session.title}
+                    </Link>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              ))}
           </SidebarMenu>
         </SidebarGroup>
       </SidebarContent>
@@ -100,4 +125,11 @@ export function AppSidebar() {
       </SidebarFooter>
     </Sidebar>
   );
+}
+
+function useSessions() {
+  return useQuery({
+    queryKey: ["sessions-list"],
+    queryFn: async () => (await api.chatSessionsList()).data,
+  });
 }

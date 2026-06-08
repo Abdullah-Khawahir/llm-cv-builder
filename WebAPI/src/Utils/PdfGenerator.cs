@@ -7,7 +7,7 @@ public static class PdfGenerator
     public static async Task<MemoryStream> GenerateAsync(string html)
     {
         if (string.IsNullOrWhiteSpace(html))
-            throw AppException.PdfGenerationFailed("Empty HTML");
+            throw AppException.NoContentToGenerate("Empty HTML");
 
         var startInfo = new ProcessStartInfo
         {
