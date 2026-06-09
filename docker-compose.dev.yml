@@ -1,0 +1,206 @@
+services:
+
+  # =========================
+  # DB
+  # =========================
+  db:
+    image: postgres:16
+    container_name: cv-db
+    restart: unless-stopped
+    env_file:
+      - ./.env.dev
+    ports:
+      - "5433:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+
+    command:
+      - "postgres"
+      - "-c"
+      - "fsync=off"
+      - "-c"
+      - "synchronous_commit=off"
+      - "-c"
+      - "full_page_writes=off"
+
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d cvdb"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+    networks:
+      - appnet-dev
+
+
+  # =========================
+  # MIGRATION (FIXED)
+  # =========================
+  migrate:
+    build:
+      context: ./WebAPI
+      dockerfile: Dockerfile.Development
+
+    command: ["dotnet", "run", "migrate"]
+
+    restart: "no"
+
+    depends_on:
+      db:
+        condition: service_healthy
+
+    env_file:
+      - ./.env.dev
+
+    networks:
+      - appnet-dev
+
+
+  # =========================
+  # API (.NET hot reload)
+  # =========================
+  api:
+    build:
+      context: ./WebAPI
+      dockerfile: Dockerfile.Development
+
+    container_name: cv-api
+    restart: unless-stopped
+
+    ports:
+      - "5044:8080"
+
+    command:
+      [
+        "dotnet",
+        "watch",
+        "run",
+        "--urls",
+        "http://0.0.0.0:8080"
+      ]
+
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      ASPNETCORE_URLS: "http://0.0.0.0:8080"
+      DOTNET_USE_POLLING_FILE_WATCHER: "1"
+      DOTNET_WATCH_RESTART_ON_RUDE_EDIT: "1"
+
+    env_file:
+      - ./.env.dev
+
+    volumes:
+      - ./WebAPI:/app
+      - /app/bin
+      - /app/obj
+      - ~/.nuget/packages:/root/.nuget/packages
+
+    depends_on:
+      db:
+        condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
+
+    networks:
+      - appnet-dev
+
+
+  # =========================
+  # MINIO
+  # =========================
+  minio:
+    image: minio/minio
+    container_name: cv-minio
+    restart: unless-stopped
+
+    command: server /data --console-address ":9001"
+
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+
+    env_file:
+      - ./.env.dev
+
+    volumes:
+      - miniodata:/data
+
+    networks:
+      - appnet-dev
+
+
+  # =========================
+  # MINIO INIT
+  # =========================
+  minio-init:
+    image: minio/mc
+    restart: "no"
+
+    depends_on:
+      - minio
+
+    env_file:
+      - ./.env.dev
+
+    entrypoint:
+      - /bin/sh
+      - -c
+      - |
+        until mc alias set local http://minio:9000 $MINIO_ROOT_USER $MINIO_ROOT_PASSWORD
+        do
+          sleep 2
+        done
+        mc mb -p local/pdfs || true
+        mc anonymous set download local/pdfs || true
+
+    networks:
+      - appnet-dev
+
+
+  # =========================
+  # FRONTEND
+  # =========================
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile.Development
+
+    container_name: frontend
+
+    ports:
+      - "3000:3000"
+
+    env_file:
+      - ./.env.dev
+
+    environment:
+      NODE_ENV: development
+      CHOKIDAR_USEPOLLING: "true"
+      WATCHPACK_POLLING: "true"
+
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+      - /app/.next
+
+    restart: unless-stopped
+
+    depends_on:
+      - api
+
+    networks:
+      - appnet-dev
+
+
+# =========================
+# VOLUMES
+# =========================
+volumes:
+  pgdata:
+  miniodata:
+
+
+# =========================
+# NETWORK
+# =========================
+networks:
+  appnet-dev:
