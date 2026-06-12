@@ -2,8 +2,8 @@ namespace WebAPI.Repositories;
 
 public sealed class LanguageRepository : IRepository<Language>
 {
-    private readonly ApplicationDbContext _context;
-    public LanguageRepository(ApplicationDbContext context) => _context = context;
+    private readonly AppDbContext _context;
+    public LanguageRepository(AppDbContext context) => _context = context;
     public async Task<IReadOnlyList<Language>> GetAllAsync() => await _context.Languages.AsNoTracking().ToListAsync().ConfigureAwait(false);
     public async Task<Language?> GetByIdAsync(Guid id) => await _context.Languages.AsNoTracking().FirstOrDefaultAsync(l => l.Id == id).ConfigureAwait(false);
     public async Task<Language> AddAsync(Language entity)

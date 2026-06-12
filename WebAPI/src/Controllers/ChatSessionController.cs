@@ -90,4 +90,20 @@ public sealed class ChatSessionController(
             throw;
         }
     }
+
+    [HttpDelete("{id:guid}")]
+    public async Task<IActionResult> DeleteSessionAync(Guid id)
+    {
+        await _commands.DeleteAsync(id);
+
+        return Ok();
+    }
+
+    [HttpPatch("{id:guid}")]
+    public async Task<IActionResult> RenameTitle(Guid id, TitleModel model)
+    {
+        await _commands.UpdateTitleAsync(id, model.title);
+
+        return Ok();
+    }
 }

@@ -2,8 +2,8 @@ namespace WebAPI.Repositories;
 
 public sealed class SkillRepository : IRepository<Skill>
 {
-    private readonly ApplicationDbContext _context;
-    public SkillRepository(ApplicationDbContext context) => _context = context;
+    private readonly AppDbContext _context;
+    public SkillRepository(AppDbContext context) => _context = context;
     public async Task<IReadOnlyList<Skill>> GetAllAsync() => await _context.Skills.AsNoTracking().ToListAsync().ConfigureAwait(false);
     public async Task<Skill?> GetByIdAsync(Guid id) => await _context.Skills.AsNoTracking().FirstOrDefaultAsync(e => e.Id == id).ConfigureAwait(false);
     public async Task<Skill> AddAsync(Skill entity)

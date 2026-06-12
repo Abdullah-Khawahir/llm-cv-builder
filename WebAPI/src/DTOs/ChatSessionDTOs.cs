@@ -2,13 +2,17 @@ using System.Text.Json.Serialization;
 
 namespace WebAPI.DTOs;
 
+public record class TitleModel( string title);
+
 public sealed record ChatPromptRequest(
     string Prompt
 );
 
 public sealed record class ChatSessionListItemDto(
     Guid Id,
-    string? title
+    string? Title,
+    DateTime? UpdatedAt,
+    DateTime CreatedAt
 );
 public sealed record class ChatSessionDetailsDto(
     Guid Id,

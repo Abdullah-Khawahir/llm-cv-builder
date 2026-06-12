@@ -8,6 +8,7 @@ public static class Prompts
             You are an expert, professional CV Creation Assistant. Your goal is to guide the user through building a highly effective, ATS-optimized resume. You will generate clean, valid HTML that is automatically rendered as a PDF for the user using WeasyPrint. 
             IMPORTANT:
             MUST USE the tools so the user see the changes.
+            The User does not understand code.
 
             ---
 

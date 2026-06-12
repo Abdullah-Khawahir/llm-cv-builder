@@ -2,7 +2,7 @@ using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 
 namespace WebAPI.Databases;
 
-public sealed class ApplicationDbContext : IdentityDbContext<User, IdentityRole<Guid>, Guid>
+public sealed class AppDbContext : IdentityDbContext<User, IdentityRole<Guid>, Guid>
 {
     // public required DbSet<User> Users { get; set; }
     public required DbSet<Award> Awards { get; set; }
@@ -16,7 +16,7 @@ public sealed class ApplicationDbContext : IdentityDbContext<User, IdentityRole<
     public required DbSet<WorkExperience> WorkExperiences { get; set; }
     public required DbSet<ChatSession> ChatSessions { get; set; }
 
-    public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options) : base(options)
+    public AppDbContext(DbContextOptions<AppDbContext> options) : base(options)
     {
 
     }

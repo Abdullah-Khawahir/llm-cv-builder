@@ -2,8 +2,8 @@ namespace WebAPI.Repositories;
 
 public sealed class CertificateRepository : IRepository<Certificate>
 {
-    private readonly ApplicationDbContext _context;
-    public CertificateRepository(ApplicationDbContext context) => _context = context;
+    private readonly AppDbContext _context;
+    public CertificateRepository(AppDbContext context) => _context = context;
     public async Task<IReadOnlyList<Certificate>> GetAllAsync() => await _context.Certificates.AsNoTracking().ToListAsync().ConfigureAwait(false);
     public async Task<Certificate?> GetByIdAsync(Guid id) => await _context.Certificates.AsNoTracking().FirstOrDefaultAsync(c => c.Id == id).ConfigureAwait(false);
     public async Task<Certificate> AddAsync(Certificate entity)

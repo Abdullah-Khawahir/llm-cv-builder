@@ -26,12 +26,11 @@ public static class ChatSessionMapper
         );
     }
 
-    public static ChatSessionListItemDto ToListItemDTO(ChatSession session)
-    {
-        return new ChatSessionListItemDto(
+    public static ChatSessionListItemDto ToListItemDTO(ChatSession session) => new ChatSessionListItemDto(
             session.Id,
-            session.Title ?? "Untitled"
+            session.Title ?? "Untitled",
+            UpdatedAt: session.UpdatedAt,
+            CreatedAt: session.CreatedAt
         );
-    }
 }
 

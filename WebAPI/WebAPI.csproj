@@ -22,9 +22,7 @@
   <InvariantGlobalization>true</InvariantGlobalization>
 </PropertyGroup>
 
-  <Target Name="GenerateOpenApi" AfterTargets="Build">
-    <Exec Command="dotnet swagger tofile --output $(ProjectDir)WebAPI.json $(TargetPath) v1" />
-  </Target>
+
 
   <ItemGroup>
     <PackageReference Include="Meziantou.Analyzer" Version="3.0.101">

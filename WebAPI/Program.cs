@@ -46,27 +46,12 @@ builder.Services.AddCors(options =>
 
 builder.Services.AddMinio((minio) =>
         minio
-        .WithCredentials("minioadmin", "minioadmin")
-        .WithEndpoint("localhost:9000")
+        .WithCredentials(appSettings.Minio.AccessKey, appSettings.Minio.SecretKey)
+        .WithEndpoint(appSettings.Minio.Endpoint)
         .WithSSL(false)
         .Build()
         );
 
-builder.Services.AddKernel()
-    .AddOpenAIChatCompletion(
-        modelId: "gemini-3.1-flash-lite",
-        apiKey: Environment.GetEnvironmentVariable("CVAPP_GEMINI_API_KEY")!,
-        // endpoint: new Uri("https://generativelanguage.googleapis.com/v1beta/models"),
-        httpClient: new HttpClient
-        {
-            DefaultRequestHeaders =
-            {
-                { "HTTP-Referer", "http://localhost:5044" },
-                { "X-Title", "CV-App" },
-                {"X-OpenRouter-Title", "CV-APP"},
-            },
-        }
-    );
 
 var dataSourceBuilder = new NpgsqlDataSourceBuilder(builder.Configuration.GetConnectionString("DefaultConnection"));
 
@@ -74,7 +59,7 @@ dataSourceBuilder.EnableDynamicJson();
 
 var dataSource = dataSourceBuilder.Build();
 
-builder.Services.AddDbContext<ApplicationDbContext>(options =>
+builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseNpgsql(dataSource));
 
 
@@ -83,7 +68,7 @@ builder.Services.AddIdentity<User, IdentityRole<Guid>>(options =>
     options.Password.RequireDigit = true;
     options.Password.RequiredLength = 6;
 })
-.AddEntityFrameworkStores<ApplicationDbContext>()
+.AddEntityFrameworkStores<AppDbContext>()
 .AddDefaultTokenProviders();
 
 
@@ -156,6 +141,20 @@ builder.Services.AddAuthentication(options =>
 builder.Services.AddControllers();
 
 var app = builder.Build();
+
+if (args.Contains("migrate"))
+{
+    using var scope = app.Services.CreateScope();
+    var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+
+    Console.WriteLine("Applying migrations...");
+    db.Database.Migrate();
+
+    Console.WriteLine("Migrations applied successfully.");
+
+    return;
+}
+
 app.UseMiddleware<ErrorHandlerMiddleware>();
 
 app.UseHttpsRedirection();

@@ -6,9 +6,9 @@ namespace WebAPI.Controllers;
 
 [ApiController]
 [Route("api/cv")]
-public sealed class CVController(ApplicationDbContext db, IMinioClient minio, ILogger<CVController> logger) : ControllerBase
+public sealed class CVController(AppDbContext db, IMinioClient minio, ILogger<CVController> logger) : ControllerBase
 {
-    private readonly ApplicationDbContext _db = db;
+    private readonly AppDbContext _db = db;
     private readonly IMinioClient _minio = minio;
     private readonly ILogger<CVController> _logger = logger;
 

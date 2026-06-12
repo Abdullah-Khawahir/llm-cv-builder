@@ -2,8 +2,8 @@ namespace WebAPI.Repositories;
 
 public sealed class EducationRepository : IRepository<Education>
 {
-    private readonly ApplicationDbContext _context;
-    public EducationRepository(ApplicationDbContext context) => _context = context;
+    private readonly AppDbContext _context;
+    public EducationRepository(AppDbContext context) => _context = context;
     public async Task<IReadOnlyList<Education>> GetAllAsync() => await _context.Educations.AsNoTracking().ToListAsync().ConfigureAwait(false);
     public async Task<Education?> GetByIdAsync(Guid id) => await _context.Educations.AsNoTracking().FirstOrDefaultAsync(e => e.Id == id).ConfigureAwait(false);
     public async Task<Education> AddAsync(Education entity)

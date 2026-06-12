@@ -44,7 +44,7 @@ services:
     command: ["dotnet", "run", "migrate"]
 
     restart: "no"
-
+    profiles: ["tools"]
     depends_on:
       db:
         condition: service_healthy
@@ -68,7 +68,7 @@ services:
     restart: unless-stopped
 
     ports:
-      - "5044:8080"
+      - "5045:8080"
 
     command:
       [
@@ -94,11 +94,21 @@ services:
       - /app/obj
       - ~/.nuget/packages:/root/.nuget/packages
 
+    # Docker Compose Watch Configuration for API
+    develop:
+      watch:
+        - action: sync
+          path: ./WebAPI
+          target: /app
+          ignore:
+            - bin/
+            - obj/
+        - action: rebuild
+          path: ./WebAPI/WebAPI.csproj
+
     depends_on:
       db:
         condition: service_healthy
-      migrate:
-        condition: service_completed_successfully
 
     networks:
       - appnet-dev
@@ -181,6 +191,18 @@ services:
       - ./frontend:/app
       - /app/node_modules
       - /app/.next
+
+    # Docker Compose Watch Configuration for Frontend
+    develop:
+      watch:
+        - action: sync
+          path: ./frontend
+          target: /app
+          ignore:
+            - node_modules/
+            - .next/
+        - action: rebuild
+          path: ./frontend/package.json
 
     restart: unless-stopped
 

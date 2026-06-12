@@ -2,9 +2,9 @@ namespace WebAPI.Repositories;
 
 public sealed class UserRepository
 {
-    private readonly ApplicationDbContext _context;
+    private readonly AppDbContext _context;
 
-    public UserRepository(ApplicationDbContext context)
+    public UserRepository(AppDbContext context)
     {
         _context = context;
     }

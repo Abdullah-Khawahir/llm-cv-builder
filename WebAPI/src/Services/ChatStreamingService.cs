@@ -44,7 +44,6 @@ public sealed class ChatStreamingService(
         var settings = new GeminiPromptExecutionSettings
         {
             FunctionChoiceBehavior = FunctionChoiceBehavior.Required(),
-            ToolCallBehavior = GeminiToolCallBehavior.EnableKernelFunctions,
         };
 
         yield return ChatStreamEvent.CreateThinkingEvent();
