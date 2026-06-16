@@ -21,8 +21,13 @@ public sealed class AuthController(
         _logger.LogInformation("Attempting to register new user with email: {Email}", model.Email);
         if (await _userManager.FindByEmailAsync(model.Email) is not null)
         {
-            _logger.LogWarning("Registration failed: User with email {Email} already exists", model.Email);
-            throw AppException.BadRequest("User already exists");
+            _logger.LogWarning("Registration failed: User already exists {Email}", model.Email);
+
+            return Problem(
+                title: "User already exists",
+                detail: $"A user with email '{model.Email}' already exists.",
+                statusCode: StatusCodes.Status409Conflict
+            );
         }
 
         var user = new User
@@ -31,21 +36,23 @@ public sealed class AuthController(
             UserName = model.Email
         };
 
-        var res = await _userManager.CreateAsync(user, model.Password);
-
-        if (!res.Succeeded)
+        if (await _userManager.CreateAsync(user, model.Password) is { Succeeded: false } result)
         {
-            var errors = String.Join(", ", res.Errors.Select(e => e.Description));
-            _logger.LogError("User creation failed for {Email}: {Errors}", model.Email, errors);
-            throw AppException.BadRequest(errors);
+            var errors = result.Errors
+                .Select(e => e.Description)
+                .ToArray();
+
+            _logger.LogError("User creation failed for {Email}: {Errors}", model.Email, string.Join(", ", errors));
+
+            return Problem(
+                title: "User creation failed",
+                detail: string.Join(", ", errors),
+                statusCode: StatusCodes.Status400BadRequest
+            );
         }
 
         _logger.LogInformation("Successfully registered new user {Email}", model.Email);
-
-        var savedUser = await _userManager.FindByEmailAsync(model.Email)
-            ?? throw AppException.NotFound($"User with Email {model.Email}");
-
-        return Ok(UserMapper.ToDTO(savedUser));
+        return Ok(UserMapper.ToDTO(user));
     }
 
     [HttpPost("login")]
@@ -72,4 +79,8 @@ public sealed class AuthController(
 
 public sealed record class JwtTokenResponse(string Token);
 public sealed record class UserLoginModel(string Email, string Password);
-public sealed record class UserRegisterModel(string Email, string Password);
+public sealed record class UserRegisterModel(
+        [EmailAddress]
+        string Email,
+        string Password
+        );
