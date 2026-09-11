@@ -26,7 +26,7 @@ public static class JwtGenerator
         var token = new JwtSecurityToken(
             issuer: jwtSettings.Issuer,
             audience: jwtSettings.Audience,
-            expires: DateTime.UtcNow.AddHours(3),
+            expires: DateTime.UtcNow.AddDays(7),
             claims: authClaims,
             signingCredentials: new SigningCredentials(authSigningKey, SecurityAlgorithms.HmacSha256)
         );

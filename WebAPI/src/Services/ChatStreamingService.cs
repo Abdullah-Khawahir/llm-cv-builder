@@ -27,7 +27,7 @@ public sealed class ChatStreamingService(
         {
             log.LogWarning("Stream failed: Session {SessionId} not found", sessionId);
 
-            yield return ChatStreamEvent.CreateErrorEvent("Session not found.");
+            yield return new ChatStreamEvent.ErrorEvent("Session not found.");
             yield break;
         }
 
@@ -46,7 +46,7 @@ public sealed class ChatStreamingService(
             FunctionChoiceBehavior = FunctionChoiceBehavior.Required(),
         };
 
-        yield return ChatStreamEvent.CreateThinkingEvent();
+        yield return new ChatStreamEvent.Thinking();
 
         IAsyncEnumerator<StreamingChatMessageContent>? stream = null;
         Exception? setupError = null;
@@ -72,7 +72,7 @@ public sealed class ChatStreamingService(
 
         if (setupError is not null)
         {
-            yield return ChatStreamEvent.CreateErrorEvent(
+            yield return new ChatStreamEvent.ErrorEvent(
                 $"Failed to initialize stream: {setupError.Message}");
             yield break;
         }
@@ -83,7 +83,7 @@ public sealed class ChatStreamingService(
                 "Stream enumerator was null for session {SessionId}",
                 sessionId);
 
-            yield return ChatStreamEvent.CreateErrorEvent(
+            yield return new ChatStreamEvent.ErrorEvent(
                 "Failed to initialize service provider stream.");
 
             yield break;
@@ -127,7 +127,7 @@ public sealed class ChatStreamingService(
 
                 assistantMessage.Append(content);
 
-                yield return ChatStreamEvent.CreateTokenEvent(content);
+                yield return new ChatStreamEvent.Token(content);
             }
         }
         finally
@@ -136,7 +136,7 @@ public sealed class ChatStreamingService(
         }
         if (streamError is not null)
         {
-            yield return ChatStreamEvent.CreateErrorEvent(
+            yield return new ChatStreamEvent.ErrorEvent(
                 $"Failed to get stream from provider: {streamError.Message}");
 
             yield break;
@@ -151,9 +151,9 @@ public sealed class ChatStreamingService(
         await commands.SaveHistoryAsync(sessionId, history)
             .ConfigureAwait(false);
 
-        yield return ChatStreamEvent.CreateCompletedEvent();
+        yield return new ChatStreamEvent.Completed();
 
-        yield return ChatStreamEvent.CreateSessionUpdateEvent(
+        yield return new ChatStreamEvent.SessionUpdate(
             ChatSessionMapper.ToDTO(session));
     }
 

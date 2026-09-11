@@ -9,5 +9,5 @@ public sealed class Language
     public string Proficiency { get; set; } = default!;
     public int Order { get; set; }
 
-    public UserProfile UserProfile { get; init; } = default!;
+    public UserProfile UserProfile { get; set; } = default!;
 };

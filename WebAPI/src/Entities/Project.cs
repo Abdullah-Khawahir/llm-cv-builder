@@ -11,5 +11,5 @@ public sealed class Project
     public string TechStack { get; set; } = default!;
     public int Order { get; set; }
 
-    public UserProfile UserProfile { get; init; } = default!;
+    public UserProfile UserProfile { get; set; } = default!;
 };

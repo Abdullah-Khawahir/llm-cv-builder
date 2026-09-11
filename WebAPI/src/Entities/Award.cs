@@ -10,5 +10,5 @@ public sealed class Award : AuditableEntity
     public int Order { get; set; }
     public Guid UserProfileId { get; set; }
 
-    public UserProfile UserProfile { get; init; } = default!;
+    public UserProfile UserProfile { get; set; } = default!;
 };

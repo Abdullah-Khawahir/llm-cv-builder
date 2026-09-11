@@ -52,6 +52,12 @@ builder.Services.AddMinio((minio) =>
         .Build()
         );
 
+builder.Services.ConfigureApplicationCookie(options =>
+{
+    options.Cookie.SameSite = SameSiteMode.None;
+    options.Cookie.SecurePolicy = CookieSecurePolicy.Always;
+    options.Cookie.HttpOnly = true;
+});
 
 var dataSourceBuilder = new NpgsqlDataSourceBuilder(builder.Configuration.GetConnectionString("DefaultConnection"));
 
@@ -60,7 +66,11 @@ dataSourceBuilder.EnableDynamicJson();
 var dataSource = dataSourceBuilder.Build();
 
 builder.Services.AddDbContext<AppDbContext>(options =>
-    options.UseNpgsql(dataSource));
+    options.UseNpgsql(
+        dataSource,
+        o => o.MapEnum<PaymentEventType>()
+        )
+    );
 
 
 builder.Services.AddIdentity<User, IdentityRole<Guid>>(options =>
@@ -75,6 +85,11 @@ builder.Services.AddIdentity<User, IdentityRole<Guid>>(options =>
 builder.Services.AddControllers();
 // builder.Services.AddScoped<IChatSessionService, ChatSessionService>();
 builder.Services.AddOpenApi();
+
+builder.Services.AddHttpClient();
+builder.Services.AddScoped<IPaymentProvider, TapPaymentProvider>();
+builder.Services.AddScoped<PaymentService>();
+
 
 builder.Services.AddScoped<IChatSessionQueryService, ChatSessionQueryService>();
 builder.Services.AddScoped<IChatSessionCommandService, ChatSessionCommandService>();
@@ -158,7 +173,7 @@ if (args.Contains("migrate"))
     var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
 
     Console.WriteLine("Applying migrations...");
-    db.Database.Migrate();
+    await db.Database.MigrateAsync().ConfigureAwait(false);
 
     Console.WriteLine("Migrations applied successfully.");
 
@@ -166,6 +181,9 @@ if (args.Contains("migrate"))
 }
 
 app.UseMiddleware<ErrorHandlerMiddleware>();
+app.UseCookiePolicy();
+// Add status code pages (so even plain 404s / 500s return a body)
+app.UseStatusCodePages();
 
 app.UseHttpsRedirection();
 

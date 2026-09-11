@@ -54,11 +54,11 @@ public sealed class ChatSessionController(
 
     [HttpPost("{id:guid}/stream")]
     [Produces("text/event-stream")]
-    [ProducesResponseType(typeof(Token), StatusCodes.Status200OK)]
-    [ProducesResponseType(typeof(SessionUpdate), StatusCodes.Status200OK)]
-    [ProducesResponseType(typeof(Completed), StatusCodes.Status200OK)]
-    [ProducesResponseType(typeof(Thinking), StatusCodes.Status200OK)]
-    [ProducesResponseType(typeof(ErrorEvent), StatusCodes.Status500InternalServerError)]
+    [ProducesResponseType(typeof(ChatStreamEvent.Token), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ChatStreamEvent.SessionUpdate), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ChatStreamEvent.Completed), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ChatStreamEvent.Thinking), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ChatStreamEvent.ErrorEvent), StatusCodes.Status500InternalServerError)]
     public async Task StreamAsync(
         Guid id,
         [FromBody] ChatPromptRequest request,

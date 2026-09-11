@@ -10,6 +10,59 @@
  * ---------------------------------------------------------------
  */
 
+/** @format int32 */
+export enum PaymentResultStatus {
+  Value0 = 0,
+  Value1 = 1,
+  Value2 = 2,
+}
+
+/** @format int32 */
+export enum PaymentEventType {
+  Value0 = 0,
+  Value1 = 1,
+  Value2 = 2,
+  Value3 = 3,
+  Value4 = 4,
+  Value5 = 5,
+  Value6 = 6,
+  Value7 = 7,
+  Value8 = 8,
+}
+
+export interface Activities {
+  id?: string | null;
+  object?: string | null;
+  /** @format int64 */
+  created?: number;
+  status?: string | null;
+  currency?: string | null;
+  /** @format double */
+  amount?: number;
+  remarks?: string | null;
+  txn_id?: string | null;
+}
+
+export interface Authentication {
+  acsEci?: string | null;
+  transaction_status?: string | null;
+  id?: string | null;
+}
+
+export interface Card {
+  object?: string | null;
+  first_six?: string | null;
+  first_eight?: string | null;
+  scheme?: string | null;
+  brand?: string | null;
+  last_four?: string | null;
+}
+
+export interface CardSecurity {
+  code?: string | null;
+  message?: string | null;
+}
+
 export interface ChatHistoryDto {
   messages?: ChatMessageDto[] | null;
 }
@@ -37,18 +90,210 @@ export interface ChatSessionListItemDto {
   /** @format uuid */
   id?: string;
   title?: string | null;
+  /** @format date-time */
+  updatedAt?: string | null;
+  /** @format date-time */
+  createdAt?: string;
+}
+
+export interface Customer {
+  id?: string | null;
+  first_name?: string | null;
+  email?: string | null;
+}
+
+export interface Date {
+  /** @format int64 */
+  created?: number;
+  /** @format int64 */
+  completed?: number;
+  /** @format int64 */
+  transaction?: number;
 }
 
 export interface ErrorEvent {
   message?: string | null;
 }
 
+export interface Expiry {
+  /** @format int32 */
+  period?: number;
+  type?: string | null;
+}
+
+export interface Gateway {
+  response?: Response;
+}
+
+export interface Intent {
+  id?: string | null;
+}
+
 export interface JwtTokenResponse {
   token?: string | null;
 }
 
+export interface Merchant {
+  country?: string | null;
+  currency?: string | null;
+  id?: string | null;
+}
+
+export interface Payment {
+  /** @format uuid */
+  id?: string;
+  /** @format double */
+  amount?: number;
+  currency?: string | null;
+  provider?: string | null;
+  providerRef?: string | null;
+  failureReason?: string | null;
+  /** @format date-time */
+  createdAt?: string;
+  /** @format date-time */
+  updatedAt?: string | null;
+  events?: PaymentEvent[] | null;
+}
+
+export interface PaymentEvent {
+  /** @format uuid */
+  id?: string;
+  /** @format uuid */
+  paymentId?: string;
+  type?: PaymentEventType;
+  message?: string | null;
+  rawPayload?: string | null;
+  /** @format date-time */
+  createdAt?: string;
+}
+
+export interface PaymentRequest {
+  token?: string | null;
+  /** @format double */
+  amount?: number;
+  currency?: string | null;
+  firstName?: string | null;
+  email?: string | null;
+  provider?: string | null;
+}
+
+export interface PaymentResult {
+  status?: PaymentResultStatus;
+  transactionId?: string | null;
+  redirectUrl?: string | null;
+  error?: string | null;
+  provider?: string | null;
+}
+
+export interface Post {
+  status?: string | null;
+  url?: string | null;
+}
+
+export interface Protect {
+  id?: string | null;
+  is_in_exclusion_list?: boolean;
+  status?: string | null;
+}
+
+export interface Receipt {
+  id?: string | null;
+  email?: boolean;
+  sms?: boolean;
+}
+
+export interface Redirect {
+  status?: string | null;
+  url?: string | null;
+}
+
+export interface Reference {
+  track?: string | null;
+  payment?: string | null;
+  acquirer?: string | null;
+  gateway?: string | null;
+}
+
+export interface Response {
+  code?: string | null;
+  message?: string | null;
+}
+
+export interface Security {
+  threeDSecure?: ThreeDSecure;
+}
+
+export interface Source {
+  object?: string | null;
+  type?: string | null;
+  payment_type?: string | null;
+  channel?: string | null;
+  id?: string | null;
+  on_file?: boolean;
+  payment_method?: string | null;
+}
+
+export interface TapWebhookBody {
+  id?: string | null;
+  object?: string | null;
+  live_mode?: boolean;
+  customer_initiated?: boolean;
+  api_version?: string | null;
+  method?: string | null;
+  status?: string | null;
+  /** @format double */
+  amount?: number;
+  currency?: string | null;
+  threeDSecure?: boolean;
+  card_threeDSecure?: boolean;
+  save_card?: boolean;
+  merchant_id?: string | null;
+  product?: string | null;
+  description?: string | null;
+  transaction?: Transaction;
+  reference?: Reference;
+  response?: Response;
+  card_security?: CardSecurity;
+  security?: Security;
+  gateway?: Gateway;
+  card?: Card;
+  receipt?: Receipt;
+  customer?: Customer;
+  merchant?: Merchant;
+  source?: Source;
+  redirect?: Redirect;
+  post?: Post;
+  authentication?: Authentication;
+  activities?: Activities[] | null;
+  auto_reversed?: boolean;
+  intent?: Intent;
+  protect?: Protect;
+  initiator?: string | null;
+}
+
 export interface Thinking {
   message?: string | null;
+}
+
+export interface ThreeDSecure {
+  id?: string | null;
+  status?: string | null;
+}
+
+export interface TitleModel {
+  title?: string | null;
+}
+
+export interface Transaction {
+  authorization_id?: string | null;
+  timezone?: string | null;
+  created?: string | null;
+  expiry?: Expiry;
+  asynchronous?: boolean;
+  /** @format double */
+  amount?: number;
+  currency?: string | null;
+  date?: Date;
 }
 
 export interface UserDto {
@@ -346,6 +591,40 @@ export class Api<
      * No description
      *
      * @tags ChatSession
+     * @name ChatSessionsDelete
+     * @request DELETE:/api/chat-sessions/{id}
+     */
+    chatSessionsDelete: (id: string, params: RequestParams = {}) =>
+      this.request<void, any>({
+        path: `/api/chat-sessions/${id}`,
+        method: "DELETE",
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags ChatSession
+     * @name ChatSessionsPartialUpdate
+     * @request PATCH:/api/chat-sessions/{id}
+     */
+    chatSessionsPartialUpdate: (
+      id: string,
+      data: TitleModel,
+      params: RequestParams = {},
+    ) =>
+      this.request<void, any>({
+        path: `/api/chat-sessions/${id}`,
+        method: "PATCH",
+        body: data,
+        type: ContentType.Json,
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags ChatSession
      * @name ChatSessionsStreamCreate
      * @request POST:/api/chat-sessions/{id}/stream
      */
@@ -387,6 +666,68 @@ export class Api<
       this.request<void, any>({
         path: `/api/ExternalAuth/google-callback`,
         method: "GET",
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags Payments
+     * @name PaymentsList
+     * @request GET:/api/payments
+     */
+    paymentsList: (params: RequestParams = {}) =>
+      this.request<void, any>({
+        path: `/api/payments`,
+        method: "GET",
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags Payments
+     * @name PaymentsCreate
+     * @request POST:/api/payments
+     */
+    paymentsCreate: (data: PaymentRequest, params: RequestParams = {}) =>
+      this.request<PaymentResult, PaymentResult>({
+        path: `/api/payments`,
+        method: "POST",
+        body: data,
+        type: ContentType.Json,
+        format: "json",
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags Payments
+     * @name PaymentsDetail
+     * @request GET:/api/payments/{id}
+     */
+    paymentsDetail: (id: string, params: RequestParams = {}) =>
+      this.request<Payment, void>({
+        path: `/api/payments/${id}`,
+        method: "GET",
+        format: "json",
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags TapWebhook
+     * @name WebhooksTapCreate
+     * @request POST:/api/webhooks/tap
+     */
+    webhooksTapCreate: (data: TapWebhookBody, params: RequestParams = {}) =>
+      this.request<void, any>({
+        path: `/api/webhooks/tap`,
+        method: "POST",
+        body: data,
+        type: ContentType.Json,
         ...params,
       }),
   };

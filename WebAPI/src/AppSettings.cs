@@ -16,7 +16,7 @@ public sealed class AppSettings
     public Minio Minio { get; set; } = default!;
 }
 
-public sealed record class ConnectionStrings(string DefaultConnection);
+public sealed record ConnectionStrings(string DefaultConnection);
 
 public sealed record class Google(
         string ClientId,

@@ -16,20 +16,20 @@ public sealed class AppDbContext : IdentityDbContext<User, IdentityRole<Guid>, G
     public required DbSet<WorkExperience> WorkExperiences { get; set; }
     public required DbSet<ChatSession> ChatSessions { get; set; }
 
+    public required DbSet<Payment> Payments { get; set; }
+    public required DbSet<PaymentEvent> PaymentEvents { get; set; }
+
     public AppDbContext(DbContextOptions<AppDbContext> options) : base(options)
     {
 
     }
 
-    // protected override void OnModelCreating(ModelBuilder modelBuilder)
-    // {
-    //     // modelBuilder.Entity<ChatSession>()
-    //     //     .Property(b => b.ChatHistory)
-    //     //     .HasConversion(
-    //     //     v => JsonSerializer.Serialize(v, null as JsonSerializerOptions),
-    //     //     v => JsonSerializer.Deserialize<ChatHistory>(v, null as JsonSerializerOptions) ?? new ChatHistory())
-    //     //     .HasColumnType("jsonb");
-    //     //
-    //     base.OnModelCreating(modelBuilder);
-    // }
+    protected override void OnModelCreating(ModelBuilder builder)
+    {
+        base.OnModelCreating(builder);
+
+        builder.Entity<PaymentEvent>()
+                .Property(p => p.Type)
+                .HasConversion<string>();
+    }
 }

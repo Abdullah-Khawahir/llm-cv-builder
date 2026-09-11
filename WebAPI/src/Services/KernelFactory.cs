@@ -32,7 +32,7 @@ public sealed class KernelFactory(
             {
                 DefaultRequestHeaders =
                 {
-                    { "HTTP-Referer", "http://localhost:5044" },
+                    { "HTTP-Referer", "http://localhost:5045" },
                     { "X-Title", "CV-App" }
                 }
             });

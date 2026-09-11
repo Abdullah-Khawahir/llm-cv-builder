@@ -8,5 +8,5 @@ public sealed class Skill : AuditableEntity
     public string Name { get; set; } = default!;
     public int Proficiency { get; set; }
 
-    public UserProfile UserProfile { get; init; } = default!;
+    public UserProfile UserProfile { get; set; } = default!;
 };

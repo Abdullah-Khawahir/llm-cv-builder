@@ -1,6 +1,4 @@
 using Microsoft.Extensions.Options;
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Identity;
 namespace WebAPI.Controllers;
 
 [ApiController]

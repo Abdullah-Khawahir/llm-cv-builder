@@ -4,13 +4,14 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "gen": "npx swagger-typescript-api generate --axios -p ./../WebAPI/WebAPI.json -o gen/ -n api.ts",
+    "gen": " cd ~/latex_cv_gen/WebAPI &&  dotnet swagger tofile --output WebAPI.json ../WebAPI/bin/Debug/net10.0/WebAPI.dll v1 ;cd -;npx swagger-typescript-api generate --axios -p ./../WebAPI/WebAPI.json -o gen/ -n api.ts",
     "build": "next build",
     "start": "next start",
     "lint": "eslint"
   },
   "dependencies": {
     "@tanstack/react-query": "^5.100.9",
+    "@tap-payments/card-sdk": "^1.0.2",
     "axios": "^1.17.0",
     "class-variance-authority": "^0.7.1",
     "dompurify": "^3.4.7",

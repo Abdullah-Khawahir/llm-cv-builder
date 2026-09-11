@@ -11,5 +11,5 @@ public sealed class Certificate
     public DateTime? ExpiryDate { get; set; }
     public string CredentialUrl { get; set; } = default!;
 
-    public UserProfile UserProfile { get; init; } = default!;
+    public UserProfile UserProfile { get; set; } = default!;
 };

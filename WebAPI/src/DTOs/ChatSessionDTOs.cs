@@ -2,7 +2,7 @@ using System.Text.Json.Serialization;
 
 namespace WebAPI.DTOs;
 
-public record class TitleModel( string title);
+public record class TitleModel(string title);
 
 public sealed record ChatPromptRequest(
     string Prompt
@@ -34,24 +34,13 @@ public sealed record class ChatMessageDto(
 [JsonDerivedType(typeof(SessionUpdate), "session_update")]
 [JsonDerivedType(typeof(Thinking), "thinking")]
 [JsonDerivedType(typeof(Completed), "completed")]
-public abstract record class ChatStreamEvent;
-
-public sealed record class Token(string Content) : ChatStreamEvent;
-public sealed record class ErrorEvent(string Message) : ChatStreamEvent;
-public sealed record class SessionUpdate(ChatSessionDetailsDto ChatSessionDto) : ChatStreamEvent;
-public sealed record class Thinking(string Message = "thinking") : ChatStreamEvent;
-public sealed record class Completed(string Message = "completed") : ChatStreamEvent;
-
-public static class ChatStreamEventFactory
+public abstract record class ChatStreamEvent
 {
-    extension(ChatStreamEvent)
-    {
-        public static Token CreateTokenEvent(string token) => new(token);
-        public static ErrorEvent CreateErrorEvent(string message) => new(message);
-        public static SessionUpdate CreateSessionUpdateEvent(ChatSessionDetailsDto session) => new(session);
-        public static Thinking CreateThinkingEvent() => new();
-        public static Completed CreateCompletedEvent() => new();
-    }
-}
+    public sealed record class Token(string Content) : ChatStreamEvent;
+    public sealed record class ErrorEvent(string Message) : ChatStreamEvent;
+    public sealed record class SessionUpdate(ChatSessionDetailsDto ChatSessionDto) : ChatStreamEvent;
+    public sealed record class Thinking(string Message = "thinking") : ChatStreamEvent;
+    public sealed record class Completed(string Message = "completed") : ChatStreamEvent;
 
+};
 

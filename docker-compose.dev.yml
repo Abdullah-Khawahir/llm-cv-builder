@@ -7,8 +7,6 @@ services:
     image: postgres:16
     container_name: cv-db
     restart: unless-stopped
-    env_file:
-      - ./.env.dev
     ports:
       - "5433:5432"
     volumes:
@@ -34,23 +32,22 @@ services:
 
 
   # =========================
-  # MIGRATION (FIXED)
+  # MIGRATION (runs on every `up`, like prod)
   # =========================
   migrate:
     build:
       context: ./WebAPI
       dockerfile: Dockerfile.Development
 
-    command: ["dotnet", "run", "migrate"]
+    command: ["dotnet", "run", "--no-launch-profile", "--", "migrate"]
 
     restart: "no"
-    profiles: ["tools"]
     depends_on:
       db:
         condition: service_healthy
 
     env_file:
-      - ./.env.dev
+      - ./.env
 
     networks:
       - appnet-dev
@@ -86,7 +83,7 @@ services:
       DOTNET_WATCH_RESTART_ON_RUDE_EDIT: "1"
 
     env_file:
-      - ./.env.dev
+      - ./.env
 
     volumes:
       - ./WebAPI:/app
@@ -107,6 +104,10 @@ services:
           path: ./WebAPI/WebAPI.csproj
 
     depends_on:
+      migrate:
+        condition: service_completed_successfully
+      minio-init:
+        condition: service_completed_successfully
       db:
         condition: service_healthy
 
@@ -129,10 +130,22 @@ services:
       - "9001:9001"
 
     env_file:
-      - ./.env.dev
+      - ./.env
 
     volumes:
       - miniodata:/data
+
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "curl",
+          "-f",
+          "http://localhost:9000/minio/health/live"
+        ]
+      interval: 5s
+      timeout: 5s
+      retries: 20
 
     networks:
       - appnet-dev
@@ -146,10 +159,11 @@ services:
     restart: "no"
 
     depends_on:
-      - minio
+      minio:
+        condition: service_healthy
 
     env_file:
-      - ./.env.dev
+      - ./.env
 
     entrypoint:
       - /bin/sh
@@ -180,12 +194,13 @@ services:
       - "3000:3000"
 
     env_file:
-      - ./.env.dev
+      - ./.env
 
     environment:
       NODE_ENV: development
       CHOKIDAR_USEPOLLING: "true"
       WATCHPACK_POLLING: "true"
+      NEXT_PUBLIC_API_URL: "${NEXT_PUBLIC_API_URL:-http://localhost:5045}"
 
     volumes:
       - ./frontend:/app

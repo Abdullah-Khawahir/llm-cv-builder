@@ -12,5 +12,5 @@ public sealed class WorkExperience
     public string Description { get; set; } = default!;
     public int Order { get; set; }
 
-    public UserProfile UserProfile { get; init; } = default!;
+    public UserProfile UserProfile { get; set; } = default!;
 };

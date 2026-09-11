@@ -1,7 +1,7 @@
 import { Api } from "@/gen/api";
 
 export const client = new Api({
-  baseURL: "http://localhost:5044",
+  baseURL: process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:5045",
   securityWorker: () => {
     const token = localStorage.getItem("access_token");
     if (token) {

@@ -12,5 +12,5 @@ public sealed class Education
     public string Details { get; set; } = default!;
     public int Order { get; set; }
 
-    public UserProfile UserProfile { get; init; } = default!;
+    public UserProfile UserProfile { get; set; } = default!;
 };

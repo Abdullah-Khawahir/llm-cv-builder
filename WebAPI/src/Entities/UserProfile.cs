@@ -20,12 +20,12 @@ public sealed class UserProfile
 
 
 
-    public User User { get; init; } = default!;
-    public ICollection<WorkExperience> WorkExperiences { get; init; } = default!;
-    public ICollection<Education> Educations { get; init; } = default!;
-    public ICollection<Skill> Skills { get; init; } = default!;
-    public ICollection<Certificate> Certificates { get; init; } = default!;
-    public ICollection<Project> Projects { get; init; } = default!;
-    public ICollection<Language> Languages { get; init; } = default!;
-    public ICollection<Award> Award { get; init; } = default!;
+    public User User { get; set; } = default!;
+    public ICollection<WorkExperience> WorkExperiences { get; set; } = default!;
+    public ICollection<Education> Educations { get; set; } = default!;
+    public ICollection<Skill> Skills { get; set; } = default!;
+    public ICollection<Certificate> Certificates { get; set; } = default!;
+    public ICollection<Project> Projects { get; set; } = default!;
+    public ICollection<Language> Languages { get; set; } = default!;
+    public ICollection<Award> Award { get; set; } = default!;
 };

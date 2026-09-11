@@ -7,14 +7,14 @@
   <ImplicitUsings>enable</ImplicitUsings>
   <!-- Code quality -->
   <EnableNETAnalyzers>true</EnableNETAnalyzers>
-  <AnalysisLevel>latest-Recommended</AnalysisLevel>
+  <!-- <AnalysisLevel>latest-Recommended</AnalysisLevel> -->
   <!-- Strong static analysis (Meziantou) -->
   <MeziantouAnalysisMode>Default</MeziantouAnalysisMode>
   <!-- Treat issues seriously -->
   <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
   <WarningsAsErrors>nullable;CS8600;CS8602;CS8618</WarningsAsErrors>
-  <RunAnalyzersDuringBuild>true</RunAnalyzersDuringBuild>
-  <RunAnalyzersDuringLiveAnalysis>true</RunAnalyzersDuringLiveAnalysis>
+  <!-- <RunAnalyzersDuringBuild>true</RunAnalyzersDuringBuild> -->
+  <!-- <RunAnalyzersDuringLiveAnalysis>true</RunAnalyzersDuringLiveAnalysis> -->
   <!-- Deterministic builds -->
   <Deterministic>true</Deterministic>
   <ContinuousIntegrationBuild>true</ContinuousIntegrationBuild>
@@ -44,6 +44,7 @@
     <PackageReference Include="Microsoft.SemanticKernel.Connectors.OpenAI" Version="1.76.0" />
     <PackageReference Include="Minio" Version="7.0.0" />
     <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="10.0.1" />
+    <PackageReference Include="OneOf" Version="3.0.271" />
     <PackageReference Include="OpenTelemetry.Exporter.OpenTelemetryProtocol" Version="1.15.3" />
     <PackageReference Include="OpenTelemetry.Exporter.Prometheus.AspNetCore" Version="1.15.3-beta.1" />
     <PackageReference Include="OpenTelemetry.Extensions.Hosting" Version="1.15.3" />
