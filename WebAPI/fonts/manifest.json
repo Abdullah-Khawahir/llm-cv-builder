@@ -1,0 +1,12 @@
+[
+  { "id": "inter", "family": "Inter", "displayName": "Inter", "supportsArabic": false },
+  { "id": "cairo", "family": "Cairo", "displayName": "Cairo", "supportsArabic": true },
+  { "id": "ibm-plex-sans-arabic", "family": "IBM Plex Sans Arabic", "displayName": "IBM Plex Sans Arabic", "supportsArabic": true },
+  { "id": "arial", "family": "Arial", "displayName": "Arial", "supportsArabic": false },
+  { "id": "times-new-roman", "family": "Times New Roman", "displayName": "Times New Roman", "supportsArabic": false },
+  { "id": "noto-sans", "family": "Noto Sans", "displayName": "Noto Sans", "supportsArabic": false },
+  { "id": "noto-serif", "family": "Noto Serif", "displayName": "Noto Serif", "supportsArabic": false },
+  { "id": "arimo", "family": "Arimo", "displayName": "Arimo (Arial-compatible)", "supportsArabic": false },
+  { "id": "tinos", "family": "Tinos", "displayName": "Tinos (Times-compatible)", "supportsArabic": false },
+  { "id": "roboto", "family": "Roboto", "displayName": "Roboto", "supportsArabic": false }
+]

@@ -106,4 +106,18 @@ public sealed class ChatSessionController(
 
         return Ok();
     }
+
+    public sealed record FontModel(string FontId);
+
+    [HttpPatch("{id:guid}/font")]
+    public async Task<IActionResult> UpdateFont(Guid id, FontModel model, [FromServices] WebAPI.Services.Fonts.IFontCatalog fonts)
+    {
+        var normalized = fonts.NormalizeId(model.FontId);
+        if (fonts.Get(normalized) is null || !string.Equals(fonts.Get(normalized)!.Id, normalized, StringComparison.OrdinalIgnoreCase))
+            return BadRequest(new { error = $"Unknown font '{model.FontId}'." });
+
+        await _commands.UpdateFontAsync(id, normalized);
+
+        return Ok();
+    }
 }

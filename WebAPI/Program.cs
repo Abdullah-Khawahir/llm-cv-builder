@@ -96,6 +96,17 @@ builder.Services.AddScoped<IChatSessionCommandService, ChatSessionCommandService
 builder.Services.AddScoped<IChatStreamingService, ChatStreamingService>();
 builder.Services.AddScoped<IKernelFactory, KernelFactory>();
 
+builder.Services.Configure<WebAPI.Services.Fonts.FontOptions>(o =>
+{
+    o.Directory = appSettings.Fonts.Directory;
+    o.DownloadGoogleFonts = appSettings.Fonts.DownloadGoogleFonts;
+    o.MaxUploadMb = appSettings.Fonts.MaxUploadMb;
+    o.DefaultFontId = appSettings.Fonts.DefaultFontId;
+    o.GoogleFontsApiKey = appSettings.Fonts.GoogleFontsApiKey;
+    o.GoogleFontFamilies = appSettings.Fonts.GoogleFontFamilies;
+});
+builder.Services.AddSingleton<WebAPI.Services.Fonts.IFontCatalog, WebAPI.Services.Fonts.FontCatalog>();
+
 builder.Services.AddScoped<UserRepository>();
 builder.Services.AddScoped<AwardRepository>();
 builder.Services.AddScoped<CertificateRepository>();

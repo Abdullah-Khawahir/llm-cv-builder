@@ -2,6 +2,7 @@
 
 import { api } from "@/app/ApiClient";
 import { Markdown } from "@/app/components/Markdown";
+import FontPicker from "@/app/components/FontPicker";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import AppSettings from "@/lib/AppSettings";
@@ -22,6 +23,8 @@ interface Message {
 interface ChatSession {
   id: string;
   htmlDocument?: string;
+  fontFamilyId?: string;
+  FontFamilyId?: string;
   version?: number;
   chatHistory?: {
     messages: Message[];
@@ -45,6 +48,11 @@ export default function Home() {
   const { data: session } = useChatSessionById(sessionId);
   const newSessionMutation = useCreateNewSession();
   const promptMutation = usePromptMutation(setAssistantStreamingText);
+  const [fontOverride, setFontOverride] = useState<string | null>(null);
+  const sessionFont =
+    (session as unknown as ChatSession | undefined)?.fontFamilyId ??
+    (session as unknown as ChatSession | undefined)?.FontFamilyId;
+  const fontId = fontOverride ?? sessionFont ?? "dejavu";
 
   // Compute messages reactively by overlaying live stream state onto your query data cache
   const messages = useMemo(() => {
@@ -98,13 +106,18 @@ export default function Home() {
     promptMutation.mutate({ sessionId: currentSessionId, userPrompt: trimmedPrompt });
   };
 
-  const hash = quickHash(session?.htmlDocument!);
-  const pdfUrl = session?.htmlDocument ? `${AppSettings.API_Base_URL}/api/cv/preview/${sessionId}?v=${hash}` : null;
+  const hash = quickHash(session?.htmlDocument! + "|" + fontId);
+  const pdfUrl = session?.htmlDocument
+    ? `${AppSettings.API_Base_URL}/api/cv/preview/${sessionId}?font=${encodeURIComponent(fontId)}&v=${hash}`
+    : null;
 
   return (
     <main className="flex h-screen w-screen overflow-hidden bg-background text-foreground font-sans-preview">
       {/* LEFT COMPARTMENT: COMPILATION & PDF ENGINE PREVIEW */}
       <section className="relative w-1/2 h-full px-2 flex flex-col justify-between border-r border-border">
+        <div className="flex items-center justify-between py-2">
+          <FontPicker value={fontId} sessionId={sessionId || null} onChange={setFontOverride} />
+        </div>
         <div className="flex-1 overflow-hidden rounded-xl border border-border bg-muted/30 shadow-xs relative">
           {(pdfUrl && session?.htmlDocument) ? (
             <PdfViewer key={hash} pdfUrl={pdfUrl} />
@@ -283,6 +296,7 @@ function usePromptMutation(
                       ...old,
                       id: sessionId,
                       htmlDocument: freshSession.HtmlDocument ?? freshSession.htmlDocument ?? old?.htmlDocument,
+                      fontFamilyId: freshSession.FontFamilyId ?? freshSession.fontFamilyId ?? (old as ChatSession | undefined)?.fontFamilyId,
                       version: freshSession.Version ?? freshSession.version ?? old?.version,
                       chatHistory: {
                         messages: normalizedMessages.length > 0 ? normalizedMessages : old?.chatHistory?.messages || []

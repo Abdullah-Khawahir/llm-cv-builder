@@ -54,7 +54,10 @@ public static class Prompts
             * Use standard text bullet points (`&bull;` or `•`).
 
 
-            * **Typography:** Use exactly *one* reliable system font family (e.g., Arial, Helvetica, or Calibri).
+            * **Typography:** Use exactly *one* CV font chosen via the ListFonts/SetFont tools (default DejaVu Sans).
+            * Never invent @font-face URLs or external font links yourself; the renderer injects the selected font automatically.
+            * If the user names a font, call ListFonts to verify then SetFont immediately.
+            * If content includes Arabic, prefer a font with Arabic support (e.g. cairo, ibm-plex-sans-arabic); otherwise the renderer appends an Arabic fallback automatically.
             * Text alignment must be left-aligned.
             * Name: 18–24pt (Bold)
             * Section Headings: 11–13pt (Bold, standard names like "Work Experience", "Education")

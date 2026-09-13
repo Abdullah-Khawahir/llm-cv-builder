@@ -1,0 +1,9 @@
+# Runtime-downloaded / drop-in font binaries are environment data, not source.
+# Keep the manifest so fresh clones know the catalog; binaries re-download
+# on startup (DownloadGoogleFonts) or are mounted as a volume in prod.
+*.ttf
+*.otf
+*.woff
+*.woff2
+!manifest.json
+uploaded/

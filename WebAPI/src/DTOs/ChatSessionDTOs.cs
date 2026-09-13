@@ -19,7 +19,8 @@ public sealed record class ChatSessionDetailsDto(
     string? Title,
     string HtmlDocument,
     ChatHistoryDto ChatHistory,
-    uint? Version
+    uint? Version,
+    string FontFamilyId = "dejavu"
 );
 public sealed record class ChatHistoryDto(
     IReadOnlyList<ChatMessageDto> Messages

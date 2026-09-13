@@ -9,6 +9,7 @@ public sealed class ChatSession : AuditableEntity
     public Guid Id { get; set; }
     public string? Title { get; set; }
     public string HtmlDocument { get; set; } = string.Empty;
+    public string FontFamilyId { get; set; } = "dejavu";
 
     [Column(TypeName = "jsonb")]
     public string ChatHistoryJson { get; set; } = "[]";

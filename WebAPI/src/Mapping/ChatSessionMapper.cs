@@ -22,7 +22,8 @@ public static class ChatSessionMapper
             session.Title,
             session.HtmlDocument,
             new ChatHistoryDto(messages),
-            session.Version
+            session.Version,
+            session.FontFamilyId
         );
     }
 

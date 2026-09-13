@@ -1,19 +1,21 @@
 using System.Security.Cryptography;
 using Minio.DataModel.Args;
 using Minio.Exceptions;
+using WebAPI.Services.Fonts;
 
 namespace WebAPI.Controllers;
 
 [ApiController]
 [Route("api/cv")]
-public sealed class CVController(AppDbContext db, IMinioClient minio, ILogger<CVController> logger) : ControllerBase
+public sealed class CVController(AppDbContext db, IMinioClient minio, IFontCatalog fonts, ILogger<CVController> logger) : ControllerBase
 {
     private readonly AppDbContext _db = db;
     private readonly IMinioClient _minio = minio;
+    private readonly IFontCatalog _fonts = fonts;
     private readonly ILogger<CVController> _logger = logger;
 
     [HttpGet("preview/{id:guid}")]
-    public async Task<IResult> PreviewCV([FromRoute] Guid id)
+    public async Task<IResult> PreviewCV([FromRoute] Guid id, [FromQuery] string? font = null)
     {
         _logger.LogInformation("Processing CV preview request for session {SessionId}", id);
         var session = await _db.ChatSessions
@@ -21,7 +23,10 @@ public sealed class CVController(AppDbContext db, IMinioClient minio, ILogger<CV
             .FirstOrDefaultAsync(x => x.Id == id)
             ?? throw AppException.NotFound($"Session not found: {id}");
 
-        var htmlHash = ComputeHash(session.HtmlDocument);
+        var fontId = string.IsNullOrWhiteSpace(font) ? session.FontFamilyId : _fonts.NormalizeId(font);
+        var fontDef = _fonts.Get(fontId);
+        var effectiveFontId = fontDef?.Id ?? session.FontFamilyId;
+        var htmlHash = ComputeHash(session.HtmlDocument, effectiveFontId);
         var fileName = $"{session.Id}_{htmlHash}.pdf";
 
         var memory = new MemoryStream();
@@ -49,7 +54,7 @@ public sealed class CVController(AppDbContext db, IMinioClient minio, ILogger<CV
         {
             try
             {
-                memory = await PdfGenerator.GenerateAsync(session.HtmlDocument);
+                memory = await PdfGenerator.GenerateAsync(session.HtmlDocument, fontDef);
 
                 await _minio.PutObjectAsync(
                     new PutObjectArgs()
@@ -74,9 +79,9 @@ public sealed class CVController(AppDbContext db, IMinioClient minio, ILogger<CV
 
 
 
-    private static string ComputeHash(string html)
+    private static string ComputeHash(string html, string fontId)
     {
-        var bytes = SHA256.HashData(Encoding.UTF8.GetBytes(html.Trim()));
+        var bytes = SHA256.HashData(Encoding.UTF8.GetBytes(html.Trim() + "|" + fontId));
         return Convert.ToHexString(bytes)[..16];
     }
 }

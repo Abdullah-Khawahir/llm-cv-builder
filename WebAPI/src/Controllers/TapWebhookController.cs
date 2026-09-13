@@ -1,3 +1,5 @@
+using System.Collections.ObjectModel;
+using System.Globalization;
 using System.Security.Cryptography;
 using System.Text.Json.Serialization;
 
@@ -88,7 +90,7 @@ public class TapWebhookController : ControllerBase
             _ => 2 // Default to 2 for SAR, AED, USD, EUR, GBP, QAR, EGP, etc.
         };
 
-        return amount.ToString($"F{decimalPlaces}", System.Globalization.CultureInfo.InvariantCulture);
+        return amount.ToString($"F{decimalPlaces}", CultureInfo.InvariantCulture);
     }
     private async Task<Payment?> GetPayment(string id)
     {
@@ -166,7 +168,7 @@ public class TapWebhookController : ControllerBase
         string status = payload.Status ?? "";
 
         // Accessing the nested 'date' object
-        string created = payload.Transaction?.Date?.Created.ToString() ?? "";
+        string created = payload.Transaction?.Date?.Created.ToString(CultureInfo.InvariantCulture) ?? "";
 
         string dataToHash =
             $"x_id{id}x_amount{amount}x_currency{currency}" +
@@ -330,7 +332,7 @@ public record TapWebhookBody
     public Authentication Authentication { get; set; } = default!;
 
     [JsonPropertyName("activities")]
-    public List<Activities> Activities { get; set; } = default!;
+    public ICollection<Activities> Activities { get; set; } = default!;
 
     [JsonPropertyName("auto_reversed")]
     public bool AutoReversed { get; set; } = default!;

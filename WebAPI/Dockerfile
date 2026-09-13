@@ -16,7 +16,8 @@ RUN dotnet publish WebAPI.csproj -c Release -o /app/publish
 FROM mcr.microsoft.com/dotnet/aspnet:10.0
 WORKDIR /app
 
-# WeasyPrint dependencies
+# WeasyPrint dependencies (pinned pip build: Debian apt ships v61 with a broken
+# RTL ToUnicode map — text selects as garbage in pdf.js. v70 maps glyphs right.)
 RUN apt-get update && apt-get install -y \
     libcairo2 \
     libpango-1.0-0 \
@@ -25,10 +26,17 @@ RUN apt-get update && apt-get install -y \
     libffi-dev \
     fontconfig \
     fonts-dejavu \
+    fonts-liberation2 \
+    fonts-noto-core \
     shared-mime-info \
+    python3 \
+    python3-pip \
     && rm -rf /var/lib/apt/lists/*
 
+RUN pip install --break-system-packages --no-cache-dir "weasyprint==70.0" brotli
+
 COPY --from=build /app/publish .
+COPY fonts ./fonts
 
 EXPOSE 8080
 

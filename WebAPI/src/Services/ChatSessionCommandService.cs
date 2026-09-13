@@ -7,6 +7,7 @@ public interface IChatSessionCommandService
     Task SaveHistoryAsync(Guid sessionId, ChatHistory history);
     Task UpdateHtmlAsync(Guid sessionId, string html);
     Task UpdateTitleAsync(Guid sessionId, string title);
+    Task UpdateFontAsync(Guid sessionId, string fontId);
 }
 
 public sealed class ChatSessionCommandService(AppDbContext db) : IChatSessionCommandService
@@ -45,6 +46,17 @@ public sealed class ChatSessionCommandService(AppDbContext db) : IChatSessionCom
             ?? throw AppException.NotFound();
 
         session.HtmlDocument = html;
+        session.UpdatedAt = DateTime.UtcNow;
+
+        await _db.SaveChangesAsync().ConfigureAwait(false);
+    }
+
+    public async Task UpdateFontAsync(Guid sessionId, string fontId)
+    {
+        var session = await _db.ChatSessions.FirstOrDefaultAsync(s => s.Id == sessionId).ConfigureAwait(false)
+            ?? throw AppException.NotFound();
+
+        session.FontFamilyId = (fontId ?? "dejavu").Trim().ToLowerInvariant().Replace(' ', '-');
         session.UpdatedAt = DateTime.UtcNow;
 
         await _db.SaveChangesAsync().ConfigureAwait(false);

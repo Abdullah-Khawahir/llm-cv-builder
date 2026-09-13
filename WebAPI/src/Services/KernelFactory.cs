@@ -8,7 +8,8 @@ public interface IKernelFactory
 public sealed class KernelFactory(
     ILoggerFactory loggerFactory,
     IChatSessionCommandService command,
-    IChatSessionQueryService query) : IKernelFactory
+    IChatSessionQueryService query,
+    WebAPI.Services.Fonts.IFontCatalog fonts) : IKernelFactory
 {
 
     public Kernel Create(Guid sessionId)
@@ -21,6 +22,7 @@ public sealed class KernelFactory(
             new CVFunctions(
                 command,
                 query,
+                fonts,
                 sessionId, logger)
             );
 
